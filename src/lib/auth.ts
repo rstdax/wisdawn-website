@@ -57,6 +57,7 @@ export function getFirebaseAuthError(error: unknown): string {
   }
 
   const code = String(error.code);
+  const origin = typeof window !== "undefined" ? window.location.origin : "unknown-origin";
   const messageMap: Record<string, string> = {
     "app/firebase-config-missing": "Firebase is not configured. Add real values in your .env file before signing in.",
     "auth/invalid-api-key": "Firebase API key is invalid. Check your VITE_FIREBASE_API_KEY value.",
@@ -81,6 +82,8 @@ export function getFirebaseAuthError(error: unknown): string {
     "auth/web-storage-unsupported": "Browser storage is blocked or unsupported. Enable cookies/local storage.",
     "auth/timeout": "Authentication timed out. Please retry.",
     "auth/invalid-app-credential": "App credential is invalid. Check Firebase app and OAuth setup.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
+      `Firebase API key is being rejected for this origin (${origin}). Check API key application restrictions/referrers in Google Cloud and ensure this exact domain/port is allowed.`,
   };
 
   const knownMessage = messageMap[code];
