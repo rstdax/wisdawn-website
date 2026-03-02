@@ -1,5 +1,5 @@
 {
-  "name": "work",
+  "name": "wisdawn",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -37,3 +37,4 @@
     "vite": "^7.3.1"
   }
 }
+
