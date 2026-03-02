@@ -10,67 +10,11 @@ import { Interests } from "./components/Interests"
 import { PersonalDetails } from "./components/PersonalDetails"
 import { Location } from "./components/Location"
 import { AllSet } from "./components/AllSet"
-import { ChevronLeft, Sun, Moon } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
 import { Home } from "./components/Home"
 import { useDeviceDetection } from "./hooks/useDeviceDetection"
 import { useUser } from "./contexts/UserContext"
-
-function ThemeToggle() {
-  const getSystemPrefersLight = () => {
-    if (typeof window === "undefined") return false
-    return window.matchMedia("(prefers-color-scheme: light)").matches
-  }
-
-  const [isLight, setIsLight] = useState(() => {
-    if (typeof window === "undefined") return false
-    const storedTheme = localStorage.getItem("theme")
-    if (storedTheme === "light") return true
-    if (storedTheme === "dark") return false
-    return getSystemPrefersLight()
-  })
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("light-theme", isLight)
-  }, [isLight])
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    if (localStorage.getItem("theme")) return
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: light)")
-    const handler = (event: MediaQueryListEvent) => {
-      setIsLight(event.matches)
-    }
-    mediaQuery.addEventListener("change", handler)
-    return () => mediaQuery.removeEventListener("change", handler)
-  }, [])
-
-  const toggleTheme = () => {
-    if (isLight) {
-      document.documentElement.classList.remove("light-theme")
-      localStorage.setItem("theme", "dark")
-      setIsLight(false)
-    } else {
-      document.documentElement.classList.add("light-theme")
-      localStorage.setItem("theme", "light")
-      setIsLight(true)
-    }
-  }
-
-  return (
-    <button
-      onClick={toggleTheme}
-      className="fixed top-4 right-4 sm:top-5 sm:right-5 z-[100] p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl transition-all shadow-2xl hover:scale-105 active:scale-95 group"
-      aria-label="Toggle theme"
-    >
-      {isLight ? (
-        <Moon className="w-6 h-6 text-white group-hover:text-blue-400 transition-colors" />
-      ) : (
-        <Sun className="w-6 h-6 text-white group-hover:text-yellow-400 transition-colors" />
-      )}
-    </button>
-  )
-}
+import { ThemeToggle } from "./components/ThemeToggle"
 
 export default function App() {
   const { isAndroid } = useDeviceDetection()
@@ -170,11 +114,11 @@ export default function App() {
   if (showLanding) {
     return (
       <>
-        <ThemeToggle />
         <LandingPage
           hideLogin={isAndroid}
           onLogin={() => { setShowLanding(false); setStep(0); }}
           onGetStarted={() => { setShowLanding(false); setStep(1); }}
+          showThemeToggle
         />
       </>
     )
@@ -183,7 +127,6 @@ export default function App() {
   if (step === 9) {
     return (
       <>
-        <ThemeToggle />
         <Home />
       </>
     )
@@ -215,7 +158,7 @@ export default function App() {
 
   return (
     <>
-      <ThemeToggle />
+      <ThemeToggle variant="floating" />
       <div className="min-h-screen bg-[#09090b] text-white flex items-center justify-center p-4 md:p-8 relative overflow-hidden selection:bg-white/20">
 
         {/* Main Container */}

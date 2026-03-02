@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
 import { ArrowRight, Sparkles, Brain, Globe, Zap, Users, Shield, Target, ChevronLeft, ChevronRight, Mail, MapPin, Phone, MessageSquare, Award, Menu, X, Smartphone, ExternalLink } from "lucide-react"
 import { cn } from "../lib/utils"
+import { ThemeToggle } from "./ThemeToggle"
 
 /** Official Google Play icon (4-color triangle, matches Play Store branding) */
 function GooglePlayIcon({ className, size = 24 }: { className?: string; size?: number }) {
@@ -44,10 +45,12 @@ export function LandingPage({
     onLogin,
     onGetStarted,
     hideLogin = false,
+    showThemeToggle = false,
 }: {
     onLogin: () => void,
     onGetStarted: () => void,
     hideLogin?: boolean
+    showThemeToggle?: boolean
 }) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
@@ -131,6 +134,7 @@ export function LandingPage({
                         <a href="#contact-us" className="hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Contact Us</a>
                     </nav>
                     <div className="flex items-center gap-2 sm:gap-4">
+                        {showThemeToggle && <ThemeToggle variant="header" />}
                         {!hideLogin && (
                             <button
                                 onClick={onLogin}

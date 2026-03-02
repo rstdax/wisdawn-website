@@ -12,6 +12,7 @@ import { SearchResults } from "./SearchResults"
 import { useUser, type WorkshopData } from "../contexts/UserContext"
 import { createDoubt, createWorkshop, subscribeToDoubts, subscribeToWorkshops, toggleDoubtLike, type DoubtData } from "../lib/firestore"
 import { uploadFiles } from "../lib/storage"
+import { ThemeToggle } from "./ThemeToggle"
 
 type DoubtItem = DoubtData
 type ChapterDraft = { id: number; title: string; videoUrl: string }
@@ -392,6 +393,7 @@ export function Home() {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                    <ThemeToggle variant="header" />
                     <button
                         onClick={() => { togglePanel('focus'); closeSidebar(); }}
                         className={cn("hidden md:flex px-4 py-2 rounded-xl items-center gap-2 transition-all border border-white/5 shrink-0", activePanel === 'focus' ? "bg-white/10 text-white" : "bg-white/5 text-neutral-300 hover:bg-white/10")}
