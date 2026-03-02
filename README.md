@@ -90,7 +90,7 @@ npm run dev
 
 ## 👥 Team
 
-Developed with ❤️ at **Nagaon University** by:
+Developed with ❤️ by:
 
 * **Rohan Ranjan Das** – Android Developer (Proprietor, Royal Synergy Technology)
 * **Aryan Dutta** – Web Developer
