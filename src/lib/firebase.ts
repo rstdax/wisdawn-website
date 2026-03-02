@@ -12,13 +12,26 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+const isPlaceholderValue = (value: string | undefined) => {
+  if (!value) return true;
+  const trimmed = value.trim();
+  return (
+    trimmed === "" ||
+    trimmed.startsWith("your_") ||
+    trimmed.includes("your_project") ||
+    trimmed.includes("example")
+  );
+};
+
 const missingConfig = Object.entries(firebaseConfig)
-  .filter(([, value]) => !value)
+  .filter(([, value]) => isPlaceholderValue(value))
   .map(([key]) => key);
 
-if (missingConfig.length > 0) {
-  throw new Error(
-    `Missing Firebase environment values: ${missingConfig.join(", ")}. Add them to your .env file.`,
+export const hasInvalidFirebaseConfig = missingConfig.length > 0;
+
+if (hasInvalidFirebaseConfig) {
+  console.error(
+    `Invalid Firebase environment values: ${missingConfig.join(", ")}. Set real Firebase credentials in your .env file.`,
   );
 }
 

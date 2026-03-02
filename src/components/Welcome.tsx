@@ -30,8 +30,10 @@ export function Welcome({
     const handleGoogleContinue = async () => {
         setAuthError("")
         try {
-            await signInWithGoogle()
-            onGoogleSuccess?.()
+            const result = await signInWithGoogle()
+            if (result) {
+                onGoogleSuccess?.()
+            }
         } catch (error) {
             setAuthError(getFirebaseAuthError(error))
         }

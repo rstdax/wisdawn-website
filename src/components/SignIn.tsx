@@ -50,8 +50,10 @@ export function SignIn({ onSignIn, onBackToWelcome }: { onSignIn: () => void, on
         setServerError("")
         setIsSubmitting(true)
         try {
-            await signInWithGoogle()
-            onSignIn()
+            const result = await signInWithGoogle()
+            if (result) {
+                onSignIn()
+            }
         } catch (authError) {
             setServerError(getFirebaseAuthError(authError))
         } finally {

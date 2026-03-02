@@ -6,17 +6,23 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { auth } from "./firebase";
+import { auth, hasInvalidFirebaseConfig } from "./firebase";
 
 export async function signUpWithEmail(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password);
 }
 
 export async function signInWithEmail(email: string, password: string) {
+  if (hasInvalidFirebaseConfig) {
+    throw { code: "app/firebase-config-missing" };
+  }
   return signInWithEmailAndPassword(auth, email, password);
 }
 
 export async function signInWithGoogle() {
+  if (hasInvalidFirebaseConfig) {
+    throw { code: "app/firebase-config-missing" };
+  }
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
   try {
@@ -52,6 +58,9 @@ export function getFirebaseAuthError(error: unknown): string {
 
   const code = String(error.code);
   const messageMap: Record<string, string> = {
+    "app/firebase-config-missing": "Firebase is not configured. Add real values in your .env file before signing in.",
+    "auth/invalid-api-key": "Firebase API key is invalid. Check your VITE_FIREBASE_API_KEY value.",
+    "auth/app-not-authorized": "This app is not authorized for Firebase Authentication. Check Firebase project config.",
     "auth/invalid-email": "Please enter a valid email address.",
     "auth/user-disabled": "This account has been disabled.",
     "auth/user-not-found": "No account found with this email.",
@@ -65,6 +74,7 @@ export function getFirebaseAuthError(error: unknown): string {
     "auth/operation-not-supported-in-this-environment": "Google popup is not supported here. Retry to continue with redirect sign-in.",
     "auth/operation-not-allowed": "Google sign-in is not enabled in Firebase Authentication.",
     "auth/unauthorized-domain": "This domain is not authorized in Firebase Authentication settings.",
+    "auth/configuration-not-found": "Google sign-in provider is not configured in this Firebase project.",
     "auth/network-request-failed": "Network error during sign-in. Check internet and retry.",
   };
 
