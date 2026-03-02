@@ -79,13 +79,16 @@ body::before {
 }
 
 /* Global Light Theme Override using Filter Inversion */
-html.light-theme {
+html.light-theme,
+body.light-theme {
   filter: invert(1) hue-rotate(180deg);
 }
 
 /* Revert media elements so they remain their true colors */
 html.light-theme img,
-html.light-theme video {
+html.light-theme video,
+body.light-theme img,
+body.light-theme video {
   filter: invert(1) hue-rotate(180deg);
 }
 
