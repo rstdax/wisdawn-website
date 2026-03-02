@@ -76,7 +76,17 @@ export function getFirebaseAuthError(error: unknown): string {
     "auth/unauthorized-domain": "This domain is not authorized in Firebase Authentication settings.",
     "auth/configuration-not-found": "Google sign-in provider is not configured in this Firebase project.",
     "auth/network-request-failed": "Network error during sign-in. Check internet and retry.",
+    "auth/internal-error": "Firebase reported an internal error. Retry in a few seconds.",
+    "auth/too-many-requests": "Too many attempts. Wait a minute and try again.",
+    "auth/web-storage-unsupported": "Browser storage is blocked or unsupported. Enable cookies/local storage.",
+    "auth/timeout": "Authentication timed out. Please retry.",
+    "auth/invalid-app-credential": "App credential is invalid. Check Firebase app and OAuth setup.",
   };
 
-  return messageMap[code] ?? "Authentication failed. Please try again.";
+  const knownMessage = messageMap[code];
+  if (knownMessage) {
+    return `${knownMessage} (code: ${code})`;
+  }
+
+  return `Authentication failed. (code: ${code})`;
 }
