@@ -372,12 +372,31 @@ export function subscribeToWorkshops(
               year: "numeric",
             })
           : "Date TBD");
+      const chapters = Array.isArray(data.chapters)
+        ? data.chapters
+            .map((chapter, index) => {
+              if (typeof chapter !== "object" || chapter === null) {
+                return null;
+              }
+              const c = chapter as Record<string, unknown>;
+              return {
+                id: String(c.id ?? `${workshopDoc.id}-ch-${index + 1}`),
+                title: String(c.title ?? `Chapter ${index + 1}`),
+                videoUrl: String(c.videoUrl ?? ""),
+                youtubeUrl: String(c.youtubeUrl ?? c.videoUrl ?? ""),
+                pdfUrl: String(c.pdfUrl ?? ""),
+                imageUrl: String(c.imageUrl ?? ""),
+              };
+            })
+            .filter((chapter): chapter is NonNullable<typeof chapter> => chapter !== null)
+        : [];
       return {
         id: toNumericId(data.id ?? workshopDoc.id, workshopDoc.id),
         name: derivedName,
         date: derivedDate,
         participants: Number(data.participants ?? data.attendees ?? 0),
         tags,
+        chapters,
         author: String(data.author ?? data.authorName ?? data.userName ?? "Anonymous"),
         authorAvatar: String(
           data.authorAvatar ?? data.avatar ?? data.profileImage ?? data.photoURL ?? data.photoUrl ?? "",

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { AnimatePresence, motion, type Variants } from "framer-motion"
 import { LandingPage } from "./components/LandingPage"
 import { Welcome } from "./components/Welcome"
@@ -62,6 +62,7 @@ export default function App() {
   const [accountPhone, setAccountPhone] = useState("")
   const [showLanding, setShowLanding] = useState(true)
   const [isFinishingSetup, setIsFinishingSetup] = useState(false)
+  const hadAuthenticatedSessionRef = useRef(false)
 
   const isOnboardingComplete = () => {
     return Boolean(
@@ -98,6 +99,26 @@ export default function App() {
       setStep(nextStep)
     }
   }, [currentUser, loadingAuth, showLanding, step, userData])
+
+  useEffect(() => {
+    if (loadingAuth) {
+      return
+    }
+
+    if (currentUser) {
+      hadAuthenticatedSessionRef.current = true
+      return
+    }
+
+    if (hadAuthenticatedSessionRef.current) {
+      setShowLanding(true)
+      setStep(1)
+      setAccountEmail("")
+      setAccountName("")
+      setAccountPhone("")
+      hadAuthenticatedSessionRef.current = false
+    }
+  }, [currentUser, loadingAuth])
 
   const handleNext = () => {
     setDirection(1)

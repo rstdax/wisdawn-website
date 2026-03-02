@@ -9,6 +9,14 @@ export interface WorkshopData {
   date: string;
   participants: number;
   tags: string[];
+  chapters?: Array<{
+    id: string;
+    title: string;
+    videoUrl?: string;
+    youtubeUrl?: string;
+    pdfUrl?: string;
+    imageUrl?: string;
+  }>;
   author?: string;
   authorAvatar?: string;
   location?: string;
@@ -33,6 +41,7 @@ export interface UserData {
   latitude: number | null;
   longitude: number | null;
   createdWorkshops: WorkshopData[];
+  joinedWorkshops: WorkshopData[];
 }
 
 interface UserContextType {
@@ -41,6 +50,7 @@ interface UserContextType {
   userData: UserData;
   updateUserData: (newData: Partial<UserData>) => void;
   addCreatedWorkshop: (workshop: WorkshopData) => void;
+  addJoinedWorkshop: (workshop: WorkshopData) => void;
   saveUserProfile: () => Promise<void>;
 }
 
@@ -60,6 +70,7 @@ const initialUserData: UserData = {
   latitude: null,
   longitude: null,
   createdWorkshops: [],
+  joinedWorkshops: [],
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -197,6 +208,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
     void persistProfile({ createdWorkshops: nextCreatedWorkshops });
   };
 
+  const addJoinedWorkshop = (workshop: WorkshopData) => {
+    let nextJoinedWorkshops: WorkshopData[] = [];
+    let didAddWorkshop = false;
+    setUserData((prev) => {
+      const alreadyJoined = prev.joinedWorkshops.some((item) => item.id === workshop.id);
+      if (alreadyJoined) {
+        nextJoinedWorkshops = prev.joinedWorkshops;
+        return prev;
+      }
+
+      nextJoinedWorkshops = [workshop, ...prev.joinedWorkshops];
+      didAddWorkshop = true;
+      return {
+        ...prev,
+        joinedWorkshops: nextJoinedWorkshops,
+      };
+    });
+
+    if (didAddWorkshop) {
+      void persistProfile({ joinedWorkshops: nextJoinedWorkshops });
+    }
+  };
+
   const saveUserProfile = async () => {
     if (!currentUser) {
       return;
@@ -215,6 +249,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         userData,
         updateUserData,
         addCreatedWorkshop,
+        addJoinedWorkshop,
         saveUserProfile,
       }}
     >

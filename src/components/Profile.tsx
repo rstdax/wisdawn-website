@@ -3,15 +3,23 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
     ArrowUpRight, CheckCircle2, Clock, Users,
     Award, MapPin, Calendar,
-    X, User as UserIcon, Flame, PlayCircle, MessageSquare, Video
+    X, User as UserIcon, Flame, PlayCircle, MessageSquare, Video, LogOut
 } from "lucide-react"
 import { cn } from "../lib/utils"
-import { useUser } from "../contexts/UserContext"
+import { useUser, type WorkshopData } from "../contexts/UserContext"
+import { signOutUser } from "../lib/auth"
 
-export function Profile({ onClose }: { onClose: () => void }) {
+export function Profile({
+    onClose,
+    onOpenWorkshop,
+}: {
+    onClose: () => void
+    onOpenWorkshop?: (workshop: WorkshopData) => void
+}) {
     const { userData, updateUserData } = useUser()
     const [activeTab, setActiveTab] = useState<'overview' | 'activity'>('overview')
     const [isEditing, setIsEditing] = useState(false)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     // Using one of the specific avatars
     const [selectedAvatar, setSelectedAvatar] = useState(userData.avatar || "https://api.dicebear.com/7.x/avataaars/png?seed=Felix&backgroundColor=b6e3f4")
@@ -30,6 +38,17 @@ export function Profile({ onClose }: { onClose: () => void }) {
         setIsEditing(false)
     }
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true)
+        try {
+            await signOutUser()
+        } catch (error) {
+            console.error("Failed to logout:", error)
+        } finally {
+            setIsLoggingOut(false)
+        }
+    }
+
     // Mock User Data - now using real user data from context
     const user = {
         name: userData.name || "Guest User",
@@ -43,26 +62,6 @@ export function Profile({ onClose }: { onClose: () => void }) {
             doubtsResolved: 38
         }
     }
-
-    // Mock Workshop Data
-    const activeWorkshops = [
-        {
-            id: '1',
-            title: "Advanced React Patterns",
-            host: "Sarah Jenkins",
-            status: "Starting in 10m",
-            participants: 124,
-            isLive: true
-        },
-        {
-            id: '2',
-            title: "System Design Prep",
-            host: "David Chen",
-            status: "Tomorrow, 2:00 PM",
-            participants: 85,
-            isLive: false
-        }
-    ]
 
     // Mock Doubts Data
     const communityDoubts = [
@@ -125,6 +124,14 @@ export function Profile({ onClose }: { onClose: () => void }) {
                         className="text-xs font-medium px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-neutral-300 hover:text-white hover:bg-white/10 transition-colors"
                     >
                         Edit Profile
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="mt-2 inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-md bg-red-500/10 border border-red-400/20 text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                        <LogOut size={14} />
+                        {isLoggingOut ? "Logging out..." : "Logout"}
                     </button>
 
                     {/* More Details */}
@@ -227,27 +234,34 @@ export function Profile({ onClose }: { onClose: () => void }) {
                                         </h3>
                                         <button className="text-xs text-neutral-500 hover:text-white transition-colors">View All</button>
                                     </div>
-                                    <div className="space-y-3">
-                                        {activeWorkshops.map(workshop => (
-                                            <div key={workshop.id} className="group bg-[#18181b] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all cursor-pointer">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <h4 className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
-                                                        {workshop.title}
-                                                    </h4>
-                                                    {workshop.isLive && (
-                                                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[10px] uppercase font-bold tracking-widest border border-red-500/20 shrink-0">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Live Now
-                                                        </span>
-                                                    )}
+                                    {userData.joinedWorkshops && userData.joinedWorkshops.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {userData.joinedWorkshops.map(workshop => (
+                                                <div
+                                                    key={workshop.id}
+                                                    className="group bg-[#18181b] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all cursor-pointer"
+                                                    onClick={() => onOpenWorkshop?.(workshop)}
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h4 className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
+                                                            {workshop.name}
+                                                        </h4>
+                                                    </div>
+                                                    <div className="flex items-center gap-4 text-xs text-neutral-400">
+                                                        <span className="flex items-center gap-1.5"><UserIcon size={12} /> {workshop.author || "Anonymous"}</span>
+                                                        <span className="flex items-center gap-1.5"><Clock size={12} /> {workshop.date || "Date TBD"}</span>
+                                                        <span className="flex items-center gap-1.5"><Users size={12} /> {workshop.participants}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-4 text-xs text-neutral-400">
-                                                    <span className="flex items-center gap-1.5"><UserIcon size={12} /> {workshop.host}</span>
-                                                    <span className="flex items-center gap-1.5"><Clock size={12} /> {workshop.status}</span>
-                                                    <span className="flex items-center gap-1.5"><Users size={12} /> {workshop.participants}</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center py-8 text-center border border-white/5 rounded-2xl bg-[#18181b]/50 border-dashed">
+                                            <Clock size={24} className="text-neutral-600 mb-3" />
+                                            <h4 className="text-sm font-medium text-white mb-1">No Joined Workshops Yet</h4>
+                                            <p className="text-xs text-neutral-500">Join a workshop from Home and it will appear here.</p>
+                                        </div>
+                                    )}
                                 </section>
 
                                 {/* My Doubts */}

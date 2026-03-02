@@ -52,17 +52,17 @@ export function LandingPage({
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
     const previewImages = [
-        "https://images.unsplash.com/photo-1555116532-0223f8e5ed88?auto=format&fit=crop&q=80&w=2000",
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=2000",
-        "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=2000",
-        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=2000"
+        "/app-preview-1.png",
+        "/app-preview-2.png",
+        "/app-preview-3.png",
+        "/app-preview-4.png"
     ]
 
     const mobilePreviewImages = [
-        "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800",
-        "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800",
-        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800",
-        "https://images.unsplash.com/photo-1526498460520-4c246339dccb?auto=format&fit=crop&q=80&w=800"
+        "/mobile-preview-1.png",
+        "/mobile-preview-2.jpeg",
+        "/mobile-preview-3.jpeg",
+        "/mobile-preview-4.jpeg"
     ]
 
     const [currentMobileIndex, setCurrentMobileIndex] = useState(0)
@@ -551,7 +551,7 @@ export function LandingPage({
                     >
                         <div className="absolute inset-0 bg-blue-900/20 mix-blend-overlay z-10" />
                         <img
-                            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2000"
+                            src="/team-photo.jpeg"
                             alt="Our Team"
                             className="w-full h-full object-cover grayscale opacity-60"
                         />

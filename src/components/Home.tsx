@@ -14,9 +14,10 @@ import { createDoubt, createWorkshop, subscribeToDoubts, subscribeToWorkshops, t
 import { uploadFiles } from "../lib/storage"
 
 type DoubtItem = DoubtData
+type ChapterDraft = { id: number; title: string; videoUrl: string }
 
 export function Home() {
-    const { addCreatedWorkshop, currentUser, userData, updateUserData } = useUser()
+    const { addCreatedWorkshop, addJoinedWorkshop, currentUser, userData, updateUserData } = useUser()
     const [filter, setFilter] = useState<"LOCALITY" | "GLOBAL">("LOCALITY")
     const [currentView, setCurrentView] = useState<'dashboard' | 'library' | 'quests' | 'live-sessions' | 'search'>('dashboard')
     const [activePanel, setActivePanel] = useState<'none' | 'focus' | 'notifications' | 'profile' | 'doubt'>('none')
@@ -27,7 +28,7 @@ export function Home() {
     const [searchQuery, setSearchQuery] = useState('')
     const [isSearchActive, setIsSearchActive] = useState(false)
     const [visibleDoubtsCount, setVisibleDoubtsCount] = useState(3)
-    const [chapters, setChapters] = useState([{ id: 1, title: '' }])
+    const [chapters, setChapters] = useState<ChapterDraft[]>([{ id: 1, title: '', videoUrl: '' }])
     const [doubtFiles, setDoubtFiles] = useState<File[]>([])
     const [postingDoubt, setPostingDoubt] = useState(false)
     const [doubtPostError, setDoubtPostError] = useState("")
@@ -38,6 +39,11 @@ export function Home() {
     const [isRequestingLocation, setIsRequestingLocation] = useState(false)
     const [locationPopupError, setLocationPopupError] = useState("")
     const [locationPromptDismissed, setLocationPromptDismissed] = useState(false)
+    const [joinedToast, setJoinedToast] = useState<{ visible: boolean, workshopName: string }>({
+        visible: false,
+        workshopName: "",
+    })
+    const [openedWorkshop, setOpenedWorkshop] = useState<WorkshopData | null>(null)
     const LOCALITY_RADIUS_KM = 10
     const normalizeAvatarUrl = (value: unknown) => {
         if (typeof value !== "string") {
@@ -119,7 +125,7 @@ export function Home() {
     }
 
     const addChapter = () => {
-        setChapters([...chapters, { id: Date.now(), title: '' }])
+        setChapters([...chapters, { id: Date.now(), title: '', videoUrl: '' }])
     }
 
     const deleteChapter = (id: number) => {
@@ -129,7 +135,7 @@ export function Home() {
     }
 
     const resetWorkshopForm = () => {
-        setChapters([{ id: 1, title: '' }])
+        setChapters([{ id: 1, title: '', videoUrl: '' }])
         setIsHostSessionOpen(false)
     }
 
@@ -222,6 +228,38 @@ export function Home() {
             setShowLocationPopup(true)
         }
     }, [filter, hasUserCoords, showLocationPopup, locationPromptDismissed])
+
+    useEffect(() => {
+        if (!joinedToast.visible) {
+            return
+        }
+        const timer = setTimeout(() => {
+            setJoinedToast({ visible: false, workshopName: "" })
+        }, 2400)
+        return () => clearTimeout(timer)
+    }, [joinedToast.visible])
+
+    const isWorkshopJoined = (workshop: WorkshopData) =>
+        userData.joinedWorkshops.some((item) => item.id === workshop.id)
+
+    const handleJoinWorkshop = (workshop: WorkshopData) => {
+        if (isWorkshopJoined(workshop)) {
+            setJoinedToast({
+                visible: true,
+                workshopName: `${workshop.name} already joined`,
+            })
+            return
+        }
+        addJoinedWorkshop(workshop)
+        setJoinedToast({
+            visible: true,
+            workshopName: `${workshop.name} joined`,
+        })
+    }
+
+    const handleOpenWorkshop = (workshop: WorkshopData) => {
+        setOpenedWorkshop(workshop)
+    }
 
     const resolveLocationName = async (latitude: number, longitude: number) => {
         try {
@@ -547,13 +585,15 @@ export function Home() {
                                                             const firstTag = workshop.tags?.[0] || "GENERAL"
                                                             const workshopAuthor = workshop.author?.trim() || "Anonymous"
                                                             const workshopAuthorAvatar = workshop.authorAvatar?.trim() || ""
+                                                            const joined = isWorkshopJoined(workshop)
                                                             return (
                                                         <motion.div
                                                             key={workshop.id}
                                                             initial={{ opacity: 0, y: 20 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             transition={{ delay: Math.min(i * 0.1, 0.3) }}
-                                                            className="bg-[#18181b] border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 hover:bg-[#27272a] hover:border-white/20 transition-all relative overflow-hidden flex flex-col gap-4 md:gap-6 min-w-[260px] md:min-w-0 w-[75vw] max-w-[280px] md:w-auto md:max-w-none shrink-0 snap-center"
+                                                            onClick={() => handleOpenWorkshop(workshop)}
+                                                            className="bg-[#18181b] border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 hover:bg-[#27272a] hover:border-white/20 transition-all relative overflow-hidden flex flex-col gap-4 md:gap-6 min-w-[260px] md:min-w-0 w-[75vw] max-w-[280px] md:w-auto md:max-w-none shrink-0 snap-center cursor-pointer"
                                                         >
                                                             {/* Profile Section */}
                                                             <div className="flex items-center gap-2.5 md:gap-3">
@@ -582,9 +622,18 @@ export function Home() {
                                                                     <span>{workshop.date || "Date TBD"}</span>
                                                                 </div>
                                                                 <button
-                                                                    className="px-5 py-2 md:px-8 md:py-3 bg-white text-black rounded-xl md:rounded-2xl font-semibold text-xs md:text-sm hover:bg-neutral-200 transition-all active:scale-95"
+                                                                    onClick={(event) => {
+                                                                        event.stopPropagation()
+                                                                        handleJoinWorkshop(workshop)
+                                                                    }}
+                                                                    className={cn(
+                                                                        "px-5 py-2 md:px-8 md:py-3 rounded-xl md:rounded-2xl font-semibold text-xs md:text-sm transition-all active:scale-95",
+                                                                        joined
+                                                                            ? "bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-500/30"
+                                                                            : "bg-white text-black hover:bg-neutral-200",
+                                                                    )}
                                                                 >
-                                                                    Join
+                                                                    {joined ? "Joined" : "Join"}
                                                                 </button>
                                                             </div>
                                                         </motion.div>
@@ -824,7 +873,15 @@ export function Home() {
                         >
                             <div className="w-full min-w-0 lg:w-[400px] h-full flex flex-col">
                                 {activePanel === 'focus' && <Focus onClose={() => togglePanel('none')} />}
-                                {activePanel === 'profile' && <Profile onClose={() => togglePanel('none')} />}
+                                {activePanel === 'profile' && (
+                                    <Profile
+                                        onClose={() => togglePanel('none')}
+                                        onOpenWorkshop={(workshop) => {
+                                            setActivePanel('none')
+                                            handleOpenWorkshop(workshop)
+                                        }}
+                                    />
+                                )}
                                 {activePanel === 'doubt' && <DoubtPanel doubt={selectedDoubt} onClose={() => togglePanel('none')} />}
                             </div>
                         </motion.aside>
@@ -1043,7 +1100,7 @@ export function Home() {
                                                         ? crypto.randomUUID()
                                                         : String(chapter.id),
                                                     title: chapter.title?.trim() || `chapter ${index + 1}`,
-                                                    videoUrl: "",
+                                                    videoUrl: chapter.videoUrl?.trim() || "",
                                                     pdfUrl: "",
                                                     imageUrl: "",
                                                 })),
@@ -1108,19 +1165,35 @@ export function Home() {
                                                     <input
                                                         type="text"
                                                         placeholder="Chapter Title"
+                                                        value={chapter.title}
+                                                        onChange={(event) => {
+                                                            const nextTitle = event.target.value
+                                                            setChapters((prev) =>
+                                                                prev.map((item) =>
+                                                                    item.id === chapter.id
+                                                                        ? { ...item, title: nextTitle }
+                                                                        : item
+                                                                )
+                                                            )
+                                                        }}
                                                         className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-white/30 transition-colors mb-3"
                                                     />
-                                                    <div className="flex gap-2">
-                                                        <button type="button" className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-medium text-neutral-300 hover:bg-white/10 transition-colors">
-                                                            Video
-                                                        </button>
-                                                        <button type="button" className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-medium text-neutral-300 hover:bg-white/10 transition-colors">
-                                                            PDF
-                                                        </button>
-                                                        <button type="button" className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-medium text-neutral-300 hover:bg-white/10 transition-colors">
-                                                            Image
-                                                        </button>
-                                                    </div>
+                                                    <input
+                                                        type="url"
+                                                        placeholder="Chapter Video URL (YouTube or direct link)"
+                                                        value={chapter.videoUrl}
+                                                        onChange={(event) => {
+                                                            const nextVideoUrl = event.target.value
+                                                            setChapters((prev) =>
+                                                                prev.map((item) =>
+                                                                    item.id === chapter.id
+                                                                        ? { ...item, videoUrl: nextVideoUrl }
+                                                                        : item
+                                                                )
+                                                            )
+                                                        }}
+                                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-white/30 transition-colors"
+                                                    />
                                                 </div>
                                             ))}
                                         </div>
@@ -1139,6 +1212,100 @@ export function Home() {
                                 </form>
                             </motion.div>
                         </div>
+                    )}
+
+                    {openedWorkshop && (
+                        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                                className="w-full max-w-xl rounded-2xl border border-white/10 bg-[#18181b] p-5 shadow-2xl"
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-white">Workshop</h3>
+                                    <button
+                                        onClick={() => setOpenedWorkshop(null)}
+                                        className="text-neutral-400 hover:text-white transition-colors"
+                                        aria-label="Close opened workshop modal"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-5">
+                                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                        <p className="text-xs uppercase tracking-wider text-neutral-400 mb-1">User</p>
+                                        <p className="text-base font-semibold text-white">
+                                            {userData.name || currentUser?.displayName || currentUser?.email || openedWorkshop.author || "Anonymous"}
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                        <p className="text-xs uppercase tracking-wider text-neutral-400 mb-1">Workshop Name</p>
+                                        <p className="text-lg font-bold text-white">{openedWorkshop.name}</p>
+                                    </div>
+
+                                    <section className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                        <h4 className="text-sm font-semibold text-white mb-3">Chapters</h4>
+                                        {openedWorkshop.chapters && openedWorkshop.chapters.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {openedWorkshop.chapters.map((chapter, index) => (
+                                                    <div
+                                                        key={chapter.id || `${openedWorkshop.id}-chapter-${index}`}
+                                                        className="rounded-lg border border-white/10 bg-[#111114] px-3 py-2"
+                                                    >
+                                                        <p className="text-xs text-neutral-400 mb-0.5">Chapter {index + 1}</p>
+                                                        <p className="text-sm text-white font-medium">
+                                                            {chapter.title?.trim() || `Chapter ${index + 1}`}
+                                                        </p>
+                                                        {chapter.videoUrl || chapter.youtubeUrl ? (
+                                                            <a
+                                                                href={(chapter.videoUrl || chapter.youtubeUrl)!}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="mt-1 inline-block text-xs text-blue-400 hover:text-blue-300 underline"
+                                                            >
+                                                                Open Video
+                                                            </a>
+                                                        ) : (
+                                                            <p className="mt-1 text-xs text-neutral-500">No video link added</p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-neutral-400">No chapters available for this workshop yet.</p>
+                                        )}
+                                    </section>
+                                </div>
+
+                                <div className="mt-5 flex justify-end">
+                                    <button
+                                        onClick={() => {
+                                            setOpenedWorkshop(null)
+                                            setCurrentView('live-sessions')
+                                        }}
+                                        className="px-4 py-2 text-sm rounded-xl bg-white text-black font-medium hover:bg-neutral-200 transition-colors"
+                                    >
+                                        Continue
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {joinedToast.visible && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.96 }}
+                            className="fixed bottom-6 right-4 sm:right-8 z-[130] rounded-xl border border-emerald-400/20 bg-emerald-500/15 px-4 py-3 text-sm text-emerald-200 shadow-xl"
+                        >
+                            {joinedToast.workshopName}
+                        </motion.div>
                     )}
                 </AnimatePresence>
             </div>
