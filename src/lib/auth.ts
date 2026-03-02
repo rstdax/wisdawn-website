@@ -8,6 +8,21 @@ import {
 } from "firebase/auth";
 import { auth, hasInvalidFirebaseConfig } from "./firebase";
 
+function extractFirebaseErrorDetails(error: unknown) {
+  if (typeof error !== "object" || error === null) {
+    return { code: "unknown", message: String(error) };
+  }
+
+  const code = "code" in error ? String(error.code) : "unknown";
+  const message = "message" in error ? String(error.message) : "No message";
+  const customData =
+    "customData" in error && typeof error.customData === "object" && error.customData !== null
+      ? error.customData
+      : undefined;
+
+  return { code, message, customData };
+}
+
 export async function signUpWithEmail(email: string, password: string) {
   return createUserWithEmailAndPassword(auth, email, password);
 }
@@ -43,6 +58,7 @@ export async function signInWithGoogle() {
       return null;
     }
 
+    console.error("Google sign-in failed:", extractFirebaseErrorDetails(error));
     throw error;
   }
 }
