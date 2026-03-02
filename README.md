@@ -1,73 +1,36 @@
-# React + TypeScript + Vite
+https://play.google.com/store/apps/details?id=com.rst.wisdawn
+>
+https://wisdawn.in
+>
+👆🏻👆🏻👆🏻
+# Wisdawn
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> [!NOTE]  
+> This repository houses the codebase for the **Android application** of Wisdawn.
+> 
+> If you are looking to explore or contribute to the android version of our platform, please visit the [Wisdawn Android Repository](https://github.com/rstdax/Wisdawn-android).
+> 
+> For regular users, we recommend downloading the official release directly from the [Google Play Store](https://play.google.com/store/apps/details?id=com.rst.wisdawn).
 
-Currently, two official plugins are available:
+<img width="1280" height="720" alt="Untitled design" src="https://github.com/user-attachments/assets/742860f8-9483-496a-b50b-6543089a5f32" />
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+<img width="1280" height="720" alt="ss2" src="https://github.com/user-attachments/assets/e6f6eae0-394b-4305-8b62-72405e50e3a4" />
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Expanding the ESLint configuration
+Wisdawn is a collaborative peer-led learning ecosystem. Shifting away from traditional teacher-centric models, Wisdawn empowers students to host mini online workshops, share knowledge, and solve academic doubts collaboratively through a gamified engagement system.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+* **Mini Online Workshops:** Create topic-based sessions and upload learning resources.
+* **Peer Doubt Solving:** A dedicated system allowing students to post questions and receive collaborative responses.
+* **Point-Based Mentor-Mentee Pairing:** Actively encourages peer tutoring and knowledge sharing across the institution.
+* **Gamified Progress Tracking:** Rewards participation and contribution to foster a community-driven academic environment.
+* **Cross-Platform Access:** Fully synchronized experience between the Android app and the Web platform.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Team
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Developed at **Nagaon University** by:
+* **Rohan Ranjan Das** – Android Developer
+* **Aryan Dutta** – Web Developer
+* **Rahul Chanda** – UI/UX Designer
