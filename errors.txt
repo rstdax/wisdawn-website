@@ -1,0 +1,4 @@
+﻿src/components/Interests.tsx(6,35): error TS1484: 'Variants' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/Interests.tsx(6,35): error TS6133: 'Variants' is declared but its value is never read.
+src/components/ui/Button.tsx(2,18): error TS1484: 'HTMLMotionProps' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/ui/Button.tsx(3,20): error TS2307: Cannot find module '../lib/utils' or its corresponding type declarations.
