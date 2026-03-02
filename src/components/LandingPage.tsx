@@ -201,13 +201,15 @@ export function LandingPage({
                         </motion.p>
 
                         <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                            <button
-                                onClick={onGetStarted}
-                                className="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-semibold text-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] group"
-                            >
-                                Get Started
-                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
+                            {!hideLogin && (
+                                <button
+                                    onClick={onGetStarted}
+                                    className="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-semibold text-lg flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] group"
+                                >
+                                    Get Started
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            )}
                             <a
                                 href={PLAY_STORE_URL}
                                 target="_blank"

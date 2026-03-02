@@ -9,13 +9,16 @@ export function ThemeToggle({ variant = "floating" }: { variant?: ThemeToggleVar
     return window.matchMedia("(prefers-color-scheme: light)").matches
   }
 
-  const [isLight, setIsLight] = useState(() => {
-    if (typeof window === "undefined") return false
-    const storedTheme = localStorage.getItem("theme")
-    if (storedTheme === "light") return true
-    if (storedTheme === "dark") return false
-    return getSystemPrefersLight()
+  const [themeMode, setThemeMode] = useState<"system" | "manual">(() => {
+    if (typeof window === "undefined") return "system"
+    return localStorage.getItem("themeMode") === "manual" ? "manual" : "system"
   })
+  const [systemIsLight, setSystemIsLight] = useState(() => getSystemPrefersLight())
+  const [manualIsLight, setManualIsLight] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem("theme") === "light"
+  })
+  const isLight = themeMode === "manual" ? manualIsLight : systemIsLight
 
   useEffect(() => {
     document.documentElement.classList.toggle("light-theme", isLight)
@@ -23,26 +26,22 @@ export function ThemeToggle({ variant = "floating" }: { variant?: ThemeToggleVar
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    if (localStorage.getItem("theme")) return
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: light)")
+    setSystemIsLight(mediaQuery.matches)
     const handler = (event: MediaQueryListEvent) => {
-      setIsLight(event.matches)
+      setSystemIsLight(event.matches)
     }
     mediaQuery.addEventListener("change", handler)
     return () => mediaQuery.removeEventListener("change", handler)
   }, [])
 
   const toggleTheme = () => {
-    if (isLight) {
-      document.documentElement.classList.remove("light-theme")
-      localStorage.setItem("theme", "dark")
-      setIsLight(false)
-    } else {
-      document.documentElement.classList.add("light-theme")
-      localStorage.setItem("theme", "light")
-      setIsLight(true)
-    }
+    const nextLight = !isLight
+    setThemeMode("manual")
+    setManualIsLight(nextLight)
+    localStorage.setItem("themeMode", "manual")
+    localStorage.setItem("theme", nextLight ? "light" : "dark")
   }
 
   const baseClassName =
@@ -66,4 +65,3 @@ export function ThemeToggle({ variant = "floating" }: { variant?: ThemeToggleVar
     </button>
   )
 }
-
