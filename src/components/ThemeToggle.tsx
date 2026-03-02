@@ -40,7 +40,7 @@ export function ThemeToggle({ variant = "floating" }: { variant?: ThemeToggleVar
 
   useEffect(() => {
     const isLight = resolvedTheme === "light"
-    document.documentElement.classList.toggle("light-theme", isLight)
+    document.documentElement.classList.remove("light-theme")
     document.body.classList.toggle("light-theme", isLight)
   }, [resolvedTheme])
 
@@ -114,4 +114,3 @@ export function ThemeToggle({ variant = "floating" }: { variant?: ThemeToggleVar
     </div>
   )
 }
-
