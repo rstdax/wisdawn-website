@@ -1,13 +1,13 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-    ArrowUpRight, CheckCircle2, Clock, Users,
-    Award, MapPin, Calendar,
+    Clock, Users, MapPin, Calendar,
     X, User as UserIcon, Flame, PlayCircle, MessageSquare, Video, LogOut
 } from "lucide-react"
 import { cn } from "../lib/utils"
 import { useUser, type WorkshopData } from "../contexts/UserContext"
 import { signOutUser } from "../lib/auth"
+import { subscribeToDoubts, subscribeToWorkshops, type DoubtData } from "../lib/firestore"
 
 export function Profile({
     onClose,
@@ -16,10 +16,12 @@ export function Profile({
     onClose: () => void
     onOpenWorkshop?: (workshop: WorkshopData) => void
 }) {
-    const { userData, updateUserData } = useUser()
+    const { currentUser, userData, updateUserData } = useUser()
     const [activeTab, setActiveTab] = useState<'overview' | 'activity'>('overview')
     const [isEditing, setIsEditing] = useState(false)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const [myCreatedWorkshops, setMyCreatedWorkshops] = useState<WorkshopData[]>([])
+    const [myDoubts, setMyDoubts] = useState<DoubtData[]>([])
 
     // Using one of the specific avatars
     const [selectedAvatar, setSelectedAvatar] = useState(userData.avatar || "https://api.dicebear.com/7.x/avataaars/png?seed=Felix&backgroundColor=b6e3f4")
@@ -49,7 +51,40 @@ export function Profile({
         }
     }
 
-    // Mock User Data - now using real user data from context
+    useEffect(() => {
+        const uid = currentUser?.uid
+        if (!uid) {
+            setMyCreatedWorkshops([])
+            setMyDoubts([])
+            return
+        }
+
+        const unsubscribeWorkshops = subscribeToWorkshops((workshops) => {
+            setMyCreatedWorkshops(workshops.filter((workshop) => workshop.hostUid === uid))
+        })
+
+        const unsubscribeDoubts = subscribeToDoubts(uid, (doubts) => {
+            setMyDoubts(doubts.filter((doubt) => doubt.authorUid === uid))
+        })
+
+        return () => {
+            unsubscribeWorkshops()
+            unsubscribeDoubts()
+        }
+    }, [currentUser?.uid])
+
+    const createdWorkshops = useMemo(() => {
+        const byId = new Map<number, WorkshopData>()
+        myCreatedWorkshops.forEach((workshop) => byId.set(workshop.id, workshop))
+        userData.createdWorkshops.forEach((workshop) => {
+            if (!byId.has(workshop.id)) {
+                byId.set(workshop.id, workshop)
+            }
+        })
+        return Array.from(byId.values())
+    }, [myCreatedWorkshops, userData.createdWorkshops])
+
+    // Real User Data from context + backend subscriptions
     const user = {
         name: userData.name || "Guest User",
         role: userData.department ? `${userData.department} Student` : "Student",
@@ -57,31 +92,24 @@ export function Profile({
         institution: userData.institution || "Not specified",
         location: userData.location || "Not specified",
         stats: {
-            reputation: 2450,
-            focusHours: 124,
-            doubtsResolved: 38
+            joinedWorkshops: userData.joinedWorkshops.length,
+            createdWorkshops: createdWorkshops.length,
+            doubts: myDoubts.length,
         }
     }
 
-    // Mock Doubts Data
-    const communityDoubts = [
-        {
-            id: '1',
-            title: "How to handle race conditions in Go channels?",
-            tags: ["Golang", "Concurrency"],
-            status: "resolved",
-            replies: 12,
-            timeAgo: "2h ago"
-        },
-        {
-            id: '2',
-            title: "Best practices for React Context vs Redux in 2026?",
-            tags: ["React", "State"],
-            status: "active",
-            replies: 5,
-            timeAgo: "5h ago"
+    const formatTimeAgo = (timestampMs: number | undefined) => {
+        if (!timestampMs || timestampMs <= 0) {
+            return "Just now"
         }
-    ]
+        const diffMs = Date.now() - timestampMs
+        const minutes = Math.max(1, Math.floor(diffMs / (1000 * 60)))
+        if (minutes < 60) return `${minutes}m ago`
+        const hours = Math.floor(minutes / 60)
+        if (hours < 24) return `${hours}h ago`
+        const days = Math.floor(hours / 24)
+        return `${days}d ago`
+    }
 
     return (
         <div className="flex flex-col h-full bg-[#09090b] text-white overflow-hidden">
@@ -176,19 +204,19 @@ export function Profile({
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-3 gap-2">
                     <div className="bg-[#18181b] rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
-                        <Award size={18} className="text-yellow-500 mb-2" />
-                        <span className="text-lg font-bold">{user.stats.reputation}</span>
-                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Rep</span>
+                        <PlayCircle size={18} className="text-blue-400 mb-2" />
+                        <span className="text-lg font-bold">{user.stats.joinedWorkshops}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Joined</span>
+                    </div>
+                    <div className="bg-[#18181b] rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
+                        <Video size={18} className="text-purple-400 mb-2" />
+                        <span className="text-lg font-bold">{user.stats.createdWorkshops}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Created</span>
                     </div>
                     <div className="bg-[#18181b] rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
                         <Flame size={18} className="text-orange-500 mb-2" />
-                        <span className="text-lg font-bold">{user.stats.focusHours}h</span>
-                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Focus</span>
-                    </div>
-                    <div className="bg-[#18181b] rounded-2xl p-4 border border-white/5 flex flex-col items-center justify-center text-center">
-                        <CheckCircle2 size={18} className="text-green-500 mb-2" />
-                        <span className="text-lg font-bold">{user.stats.doubtsResolved}</span>
-                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Helped</span>
+                        <span className="text-lg font-bold">{user.stats.doubts}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium">Doubts</span>
                     </div>
                 </div>
 
@@ -273,13 +301,13 @@ export function Profile({
                                         <button className="text-xs text-neutral-500 hover:text-white transition-colors">View All</button>
                                     </div>
                                     <div className="space-y-3">
-                                        {communityDoubts.map(doubt => (
-                                            <div key={doubt.id} className="group bg-[#18181b] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all cursor-pointer flex flex-col gap-3">
+                                        {myDoubts.length > 0 ? myDoubts.map(doubt => (
+                                            <div key={doubt.id} className="group bg-[#18181b] border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all flex flex-col gap-3">
                                                 <h4 className="text-sm font-medium leading-snug text-neutral-200 group-hover:text-white transition-colors">
-                                                    {doubt.title}
+                                                    {doubt.question}
                                                 </h4>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {doubt.tags.map(tag => (
+                                                    {(doubt.tags.length > 0 ? doubt.tags : ["GENERAL"]).map(tag => (
                                                         <span key={tag} className="px-2 py-1 rounded-md bg-white/5 text-neutral-400 text-xs border border-white/5">
                                                             {tag}
                                                         </span>
@@ -287,24 +315,25 @@ export function Profile({
                                                 </div>
                                                 <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-neutral-500">
                                                     <div className="flex items-center gap-3">
-                                                        <span className="flex items-center gap-1 text-white"><ArrowUpRight size={14} /> {doubt.replies} Replies</span>
-                                                        <span>{doubt.timeAgo}</span>
+                                                        <span className="flex items-center gap-1 text-white">{doubt.replies} Replies</span>
+                                                        <span>{formatTimeAgo(doubt.timestampMs || doubt.createdAt?.toMillis())}</span>
                                                     </div>
-                                                    {doubt.status === 'resolved' && (
-                                                        <span className="flex items-center gap-1 text-green-500">
-                                                            <CheckCircle2 size={12} /> Resolved
-                                                        </span>
-                                                    )}
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="flex flex-col items-center justify-center py-8 text-center border border-white/5 rounded-2xl bg-[#18181b]/50 border-dashed">
+                                                <Clock size={24} className="text-neutral-600 mb-3" />
+                                                <h4 className="text-sm font-medium text-white mb-1">No Doubts Posted Yet</h4>
+                                                <p className="text-xs text-neutral-500">Questions you post will appear here.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </section>
                             </>
                         )}
                         {activeTab === 'activity' && (
                             <>
-                                {userData.createdWorkshops && userData.createdWorkshops.length > 0 ? (
+                                {createdWorkshops.length > 0 ? (
                                     <section>
                                         <div className="flex items-center justify-between mb-4">
                                             <h3 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
@@ -312,8 +341,12 @@ export function Profile({
                                             </h3>
                                         </div>
                                         <div className="space-y-3">
-                                            {userData.createdWorkshops.map(workshop => (
-                                                <div key={workshop.id} className="bg-[#18181b] border border-white/10 rounded-3xl p-6 hover:bg-[#27272a] hover:border-white/20 transition-all flex flex-col gap-4">
+                                            {createdWorkshops.map(workshop => (
+                                                <div
+                                                    key={workshop.id}
+                                                    className="bg-[#18181b] border border-white/10 rounded-3xl p-6 hover:bg-[#27272a] hover:border-white/20 transition-all flex flex-col gap-4 cursor-pointer"
+                                                    onClick={() => onOpenWorkshop?.(workshop)}
+                                                >
                                                     {/* Profile Section */}
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold shrink-0">

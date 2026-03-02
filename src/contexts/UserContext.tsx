@@ -9,6 +9,7 @@ export interface WorkshopData {
   date: string;
   participants: number;
   tags: string[];
+  hostUid?: string;
   chapters?: Array<{
     id: string;
     title: string;

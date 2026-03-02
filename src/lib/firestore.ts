@@ -21,6 +21,7 @@ export interface DoubtData {
   id: number;
   question: string;
   author: string;
+  authorUid?: string;
   authorAvatar?: string;
   replies: number;
   tags: string[];
@@ -299,6 +300,7 @@ function mapDoubtDoc(
     id: toNumericId(data.id ?? doubtDoc.id, doubtDoc.id),
     question: String(data.question ?? data.title ?? data.content ?? data.text ?? data.body ?? ""),
     author: String(data.author ?? data.authorName ?? data.userName ?? "Anonymous"),
+    authorUid: String(data.authorUid ?? data.uid ?? data.userId ?? data.authorId ?? ""),
     authorAvatar: String(data.authorAvatar ?? data.avatar ?? data.profileImage ?? ""),
     replies: Number(data.replies ?? data.replyCount ?? data.commentsCount ?? 0),
     tags,
@@ -396,6 +398,7 @@ export function subscribeToWorkshops(
         date: derivedDate,
         participants: Number(data.participants ?? data.attendees ?? 0),
         tags,
+        hostUid: String(data.hostUid ?? data.hostId ?? data.authorId ?? data.uid ?? ""),
         chapters,
         author: String(data.author ?? data.authorName ?? data.userName ?? "Anonymous"),
         authorAvatar: String(

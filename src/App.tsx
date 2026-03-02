@@ -16,14 +16,34 @@ import { useDeviceDetection } from "./hooks/useDeviceDetection"
 import { useUser } from "./contexts/UserContext"
 
 function ThemeToggle() {
+  const getSystemPrefersLight = () => {
+    if (typeof window === "undefined") return false
+    return window.matchMedia("(prefers-color-scheme: light)").matches
+  }
+
   const [isLight, setIsLight] = useState(() => {
     if (typeof window === "undefined") return false
-    return localStorage.getItem("theme") === "light"
+    const storedTheme = localStorage.getItem("theme")
+    if (storedTheme === "light") return true
+    if (storedTheme === "dark") return false
+    return getSystemPrefersLight()
   })
 
   useEffect(() => {
     document.documentElement.classList.toggle("light-theme", isLight)
   }, [isLight])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (localStorage.getItem("theme")) return
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: light)")
+    const handler = (event: MediaQueryListEvent) => {
+      setIsLight(event.matches)
+    }
+    mediaQuery.addEventListener("change", handler)
+    return () => mediaQuery.removeEventListener("change", handler)
+  }, [])
 
   const toggleTheme = () => {
     if (isLight) {
@@ -40,7 +60,7 @@ function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed bottom-6 right-6 z-[100] p-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl transition-all shadow-2xl hover:scale-110 active:scale-95 group"
+      className="fixed top-4 right-4 sm:top-5 sm:right-5 z-[100] p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl transition-all shadow-2xl hover:scale-105 active:scale-95 group"
       aria-label="Toggle theme"
     >
       {isLight ? (
