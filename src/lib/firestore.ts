@@ -343,7 +343,7 @@ function mapDoubtDoc(
     createdAt: data.createdAt instanceof Timestamp ? data.createdAt : undefined,
     location,
     localityKey: String(data.localityKey ?? normalizeLocationKey(location)),
-    locationSource: data.locationSource === "approx" ? "approx" : "precise",
+    locationSource: data.locationSource === "precise" ? "precise" : "approx",
     latitude: normalizedLatitude,
     longitude: normalizedLongitude,
     timestampMs,
@@ -435,7 +435,7 @@ export function subscribeToWorkshops(
         ),
         location,
         localityKey: String(data.localityKey ?? normalizeLocationKey(location)),
-        locationSource: data.locationSource === "approx" ? "approx" : "precise",
+        locationSource: data.locationSource === "precise" ? "precise" : "approx",
         latitude: normalizedLatitude,
         longitude: normalizedLongitude,
       } satisfies WorkshopData;

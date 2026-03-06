@@ -329,6 +329,7 @@ export function Home() {
                         location: locationName,
                         latitude,
                         longitude,
+                        locationSource: "precise",
                     })
                     setLocationPromptDismissed(false)
                     setIsRequestingLocation(false)
