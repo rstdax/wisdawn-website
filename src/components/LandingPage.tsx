@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { motion, AnimatePresence, useInView, useReducedMotion, type Variants } from "framer-motion"
-import { ArrowRight, Sparkles, Brain, Globe, Zap, Users, Shield, Target, ChevronLeft, ChevronRight, Mail, MapPin, Phone, MessageSquare, Award, Menu, X, Smartphone, ExternalLink } from "lucide-react"
+import { ArrowRight, Sparkles, Brain, Globe, Zap, Users, Shield, Target, Mail, MapPin, Phone, MessageSquare, Award, Menu, X, Smartphone, ExternalLink } from "lucide-react"
 import { cn } from "../lib/utils"
 import { ThemeToggle } from "./ThemeToggle"
 
@@ -68,6 +68,10 @@ export function LandingPage({
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
     const [currentMobileIndex, setCurrentMobileIndex] = useState(0)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const desktopTouchStartX = useRef<number | null>(null)
+    const mobileTouchStartX = useRef<number | null>(null)
+    const lastDesktopScrollTs = useRef(0)
+    const lastMobileScrollTs = useRef(0)
     const desktopSliderRef = useRef<HTMLElement | null>(null)
     const mobileSliderRef = useRef<HTMLElement | null>(null)
     const desktopSliderInView = useInView(desktopSliderRef, { margin: "-20% 0px -20% 0px" })
@@ -88,6 +92,54 @@ export function LandingPage({
 
     const prevMobileImage = () => {
         setCurrentMobileIndex((prev) => (prev === 0 ? mobilePreviewImages.length - 1 : prev - 1))
+    }
+
+    const handleDesktopWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+        const now = Date.now()
+        if (now - lastDesktopScrollTs.current < 350) return
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+        if (Math.abs(delta) < 12) return
+        lastDesktopScrollTs.current = now
+        if (delta > 0) nextImage()
+        else prevImage()
+    }
+
+    const handleMobileWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+        const now = Date.now()
+        if (now - lastMobileScrollTs.current < 350) return
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
+        if (Math.abs(delta) < 12) return
+        lastMobileScrollTs.current = now
+        if (delta > 0) nextMobileImage()
+        else prevMobileImage()
+    }
+
+    const handleDesktopTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        desktopTouchStartX.current = e.changedTouches[0]?.clientX ?? null
+    }
+
+    const handleDesktopTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (desktopTouchStartX.current === null) return
+        const endX = e.changedTouches[0]?.clientX ?? desktopTouchStartX.current
+        const delta = desktopTouchStartX.current - endX
+        desktopTouchStartX.current = null
+        if (Math.abs(delta) < 35) return
+        if (delta > 0) nextImage()
+        else prevImage()
+    }
+
+    const handleMobileTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+        mobileTouchStartX.current = e.changedTouches[0]?.clientX ?? null
+    }
+
+    const handleMobileTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (mobileTouchStartX.current === null) return
+        const endX = e.changedTouches[0]?.clientX ?? mobileTouchStartX.current
+        const delta = mobileTouchStartX.current - endX
+        mobileTouchStartX.current = null
+        if (Math.abs(delta) < 35) return
+        if (delta > 0) nextMobileImage()
+        else prevMobileImage()
     }
 
     const handleMobileNavClick = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
@@ -263,7 +315,12 @@ export function LandingPage({
                     transition={{ delay: 0.4, duration: 0.6 }}
                     className="mt-16 sm:mt-24 md:mt-32 relative mx-auto max-w-6xl px-2 sm:px-4 group"
                 >
-                    <div className="relative min-h-[200px] sm:min-h-[280px] md:min-h-[340px] flex items-center justify-center">
+                    <div
+                        className="relative min-h-[200px] sm:min-h-[280px] md:min-h-[340px] flex items-center justify-center touch-pan-x"
+                        onWheel={handleDesktopWheel}
+                        onTouchStart={handleDesktopTouchStart}
+                        onTouchEnd={handleDesktopTouchEnd}
+                    >
                         <AnimatePresence initial={false}>
                             {previewImages.map((src, idx) => {
                                 // Calculate distance from center to scale and position cards
@@ -327,21 +384,6 @@ export function LandingPage({
                             })}
                         </AnimatePresence>
 
-                        {/* Slider Controls */}
-                        <div className="absolute inset-y-0 left-0 right-0 z-30 flex items-center justify-between px-2 sm:px-10 pointer-events-none">
-                            <button
-                                onClick={prevImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 group-hover:opacity-100"
-                            >
-                                <ChevronLeft size={24} />
-                            </button>
-                            <button
-                                onClick={nextImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 group-hover:opacity-100"
-                            >
-                                <ChevronRight size={24} />
-                            </button>
-                        </div>
                     </div>
 
                     {/* Pagination Indicators */}
@@ -371,7 +413,12 @@ export function LandingPage({
                         <p className="text-neutral-400 text-sm sm:text-base">Experience seamless learning on our mobile application.</p>
                     </div>
 
-                    <div className="relative min-h-[380px] sm:min-h-[480px] md:min-h-[550px] flex items-center justify-center">
+                    <div
+                        className="relative min-h-[380px] sm:min-h-[480px] md:min-h-[550px] flex items-center justify-center touch-pan-x"
+                        onWheel={handleMobileWheel}
+                        onTouchStart={handleMobileTouchStart}
+                        onTouchEnd={handleMobileTouchEnd}
+                    >
                         <AnimatePresence initial={false}>
                             {mobilePreviewImages.map((src, idx) => {
                                 const offset = idx - currentMobileIndex;
@@ -415,21 +462,6 @@ export function LandingPage({
                             })}
                         </AnimatePresence>
 
-                        {/* Slider Controls */}
-                        <div className="absolute inset-y-0 left-0 right-0 z-30 flex items-center justify-between px-2 sm:px-10 pointer-events-none">
-                            <button
-                                onClick={prevMobileImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 xl:opacity-100 group-hover:opacity-100"
-                            >
-                                <ChevronLeft size={24} />
-                            </button>
-                            <button
-                                onClick={nextMobileImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 xl:opacity-100 group-hover:opacity-100"
-                            >
-                                <ChevronRight size={24} />
-                            </button>
-                        </div>
                     </div>
 
                     {/* Pagination Indicators */}
