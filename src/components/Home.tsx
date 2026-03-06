@@ -563,7 +563,7 @@ export function Home() {
                                             <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/10 rounded-2xl w-fit">
                                                 <button
                                                     onClick={() => {
-                                                        if (!hasUserCoords) {
+                                                        if (!hasLocalityContext) {
                                                             setLocationPromptDismissed(false)
                                                             setShowLocationPopup(true)
                                                             return
@@ -594,7 +594,7 @@ export function Home() {
                                                     <div>
                                                         <h2 className="text-2xl font-semibold tracking-tight text-white mb-1">Workshops</h2>
                                                         <p className="text-sm text-neutral-400 leading-relaxed">Join interactive workshops and enhance your skills {filter === "LOCALITY" ? "near you" : "worldwide"}.</p>
-                                                        {filter === "LOCALITY" && !hasUserCoords && (
+                                                        {filter === "LOCALITY" && !hasLocalityContext && (
                                                             <p className="text-xs text-amber-400 mt-1">Enable precise location to view uploads within 10km.</p>
                                                         )}
                                                     </div>
@@ -678,7 +678,7 @@ export function Home() {
                                                     <div>
                                                         <h2 className="text-2xl font-semibold tracking-tight text-white mb-1">Trending Doubts</h2>
                                                         <p className="text-sm text-neutral-400 leading-relaxed">Help resolving questions from the community {filter === "LOCALITY" ? "in your area" : "around the globe"}.</p>
-                                                        {filter === "LOCALITY" && !hasUserCoords && (
+                                                        {filter === "LOCALITY" && !hasLocalityContext && (
                                                             <p className="text-xs text-amber-400 mt-1">Enable precise location to view uploads within 10km.</p>
                                                         )}
                                                     </div>
