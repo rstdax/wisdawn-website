@@ -62,6 +62,19 @@ function normalizeNonEmptyString(value: unknown): string {
   return trimmed;
 }
 
+function normalizeCoordinate(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value.trim());
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
 function buildFallbackAvatar(seed: string): string {
   return `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(seed || "User")}&backgroundColor=c0aede`;
 }
@@ -159,14 +172,17 @@ export async function upsertUserProfile(uid: string, data: Partial<UserData>) {
     payload.localityKey = normalizeLocationKey(safeLocation);
   }
 
-  if (typeof data.latitude === "number") {
-    payload.latitude = data.latitude;
-    payload.lat = data.latitude;
+  const normalizedLatitude = normalizeCoordinate(data.latitude);
+  const normalizedLongitude = normalizeCoordinate(data.longitude);
+
+  if (normalizedLatitude !== null) {
+    payload.latitude = normalizedLatitude;
+    payload.lat = normalizedLatitude;
   }
 
-  if (typeof data.longitude === "number") {
-    payload.longitude = data.longitude;
-    payload.lng = data.longitude;
+  if (normalizedLongitude !== null) {
+    payload.longitude = normalizedLongitude;
+    payload.lng = normalizedLongitude;
   }
 
   await setDoc(
@@ -190,6 +206,8 @@ export async function createWorkshop(workshop: WorkshopData & { hostUid: string 
   const nowMs = Date.now();
   const workshopRef = doc(db, "workshops", workshopId);
   const location = workshop.location ?? "";
+  const normalizedLatitude = normalizeCoordinate(workshop.latitude);
+  const normalizedLongitude = normalizeCoordinate(workshop.longitude);
   const normalizedTags = workshop.tags ?? [];
   const primaryTopic = normalizedTags[0] ?? "GENERAL";
   const resolvedHostIdentity = await resolveUserIdentity(
@@ -233,10 +251,10 @@ export async function createWorkshop(workshop: WorkshopData & { hostUid: string 
     chapters,
     location,
     localityKey: workshop.localityKey ?? normalizeLocationKey(location),
-    latitude: workshop.latitude ?? null,
-    longitude: workshop.longitude ?? null,
-    lat: workshop.latitude ?? null,
-    lng: workshop.longitude ?? null,
+    latitude: normalizedLatitude,
+    longitude: normalizedLongitude,
+    lat: normalizedLatitude,
+    lng: normalizedLongitude,
     timestamp: nowMs,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -279,6 +297,8 @@ function mapDoubtDoc(
   const likedBy = Array.isArray(data.likedBy) ? data.likedBy.map(String) : [];
   const location = String(
     data.location ?? data.locality ?? data.city ?? data.state ?? "");
+  const normalizedLatitude = normalizeCoordinate(data.latitude ?? data.lat);
+  const normalizedLongitude = normalizeCoordinate(data.longitude ?? data.lng);
   const imageUrl = typeof data.imageUrl === 'string' ? data.imageUrl.trim() : null;
   const tags = Array.isArray(data.tags)
     ? data.tags.map(String)
@@ -317,8 +337,8 @@ function mapDoubtDoc(
     createdAt: data.createdAt instanceof Timestamp ? data.createdAt : undefined,
     location,
     localityKey: String(data.localityKey ?? normalizeLocationKey(location)),
-    latitude: typeof data.latitude === "number" ? data.latitude : (typeof data.lat === "number" ? data.lat : null),
-    longitude: typeof data.longitude === "number" ? data.longitude : (typeof data.lng === "number" ? data.lng : null),
+    latitude: normalizedLatitude,
+    longitude: normalizedLongitude,
     timestampMs,
   } satisfies DoubtData;
 }
@@ -345,6 +365,8 @@ export function subscribeToWorkshops(
       const location = String(
         data.location ?? data.locality ?? data.city ?? data.state ?? "",
       );
+      const normalizedLatitude = normalizeCoordinate(data.latitude ?? data.lat);
+      const normalizedLongitude = normalizeCoordinate(data.longitude ?? data.lng);
       const tags = Array.isArray(data.tags)
         ? data.tags.map(String)
         : data.tag
@@ -406,8 +428,8 @@ export function subscribeToWorkshops(
         ),
         location,
         localityKey: String(data.localityKey ?? normalizeLocationKey(location)),
-        latitude: typeof data.latitude === "number" ? data.latitude : (typeof data.lat === "number" ? data.lat : null),
-        longitude: typeof data.longitude === "number" ? data.longitude : (typeof data.lng === "number" ? data.lng : null),
+        latitude: normalizedLatitude,
+        longitude: normalizedLongitude,
       } satisfies WorkshopData;
     });
     onChange(
@@ -439,6 +461,8 @@ export async function createDoubt(
   const nowMs = Date.now();
   const doubtRef = doc(db, "posts", doubtId);
   const location = doubt.location ?? "";
+  const normalizedLatitude = normalizeCoordinate(doubt.latitude);
+  const normalizedLongitude = normalizeCoordinate(doubt.longitude);
   const normalizedImageUrl =
     (typeof doubt.imageUrl === "string" && doubt.imageUrl.trim().length > 0)
       ? doubt.imageUrl
@@ -479,10 +503,10 @@ export async function createDoubt(
     imageUrl: normalizedImageUrl,
     location,
     localityKey: doubt.localityKey ?? normalizeLocationKey(location),
-    latitude: doubt.latitude ?? null,
-    longitude: doubt.longitude ?? null,
-    lat: doubt.latitude ?? null,
-    lng: doubt.longitude ?? null,
+    latitude: normalizedLatitude,
+    longitude: normalizedLongitude,
+    lat: normalizedLatitude,
+    lng: normalizedLongitude,
     timestamp: nowMs,
     attachmentUrls: doubt.attachmentUrls ?? [],
     likedBy: [],
