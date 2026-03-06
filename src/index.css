@@ -78,15 +78,41 @@ body::before {
   background-image: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6);
 }
 
-/* Global Light Theme Override using Filter Inversion */
+/* Light theme without filter inversion (prevents fixed/sticky glitches) */
 body.light-theme {
-  filter: invert(1) hue-rotate(180deg);
+  background-color: #f3f4f6;
+  background-image: radial-gradient(circle at 50% 0%, #ffffff 0%, #eef2f7 100%);
+  color: #0f172a;
 }
 
-/* Revert media elements so they remain their true colors */
-body.light-theme img,
-body.light-theme video {
-  filter: invert(1) hue-rotate(180deg);
+body.light-theme #root {
+  background-color: transparent;
+}
+
+body.light-theme .text-white {
+  color: #0f172a !important;
+}
+
+body.light-theme .text-neutral-400,
+body.light-theme .text-neutral-500,
+body.light-theme .text-slate-400,
+body.light-theme .text-white\/50,
+body.light-theme .text-white\/30 {
+  color: #475569 !important;
+}
+
+body.light-theme [class*="bg-[#09090b]"],
+body.light-theme [class*="bg-[#000000]"],
+body.light-theme [class*="bg-[#18181b]"],
+body.light-theme [class*="bg-bg-dark"],
+body.light-theme [class*="bg-black/40"],
+body.light-theme [class*="bg-black/60"],
+body.light-theme [class*="bg-black/70"] {
+  background-color: #ffffff !important;
+}
+
+body.light-theme [class*="border-white"] {
+  border-color: rgba(15, 23, 42, 0.14) !important;
 }
 
 /* Responsive: safe area and touch targets */
@@ -113,4 +139,62 @@ body.light-theme video {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
+}
+
+.join-movement-card {
+  background-image: url("/team-photo.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.join-movement-overlay {
+  background:
+    linear-gradient(135deg, rgba(8, 47, 73, 0.45) 0%, rgba(17, 24, 39, 0.7) 50%, rgba(76, 29, 149, 0.45) 100%),
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.15), transparent 55%);
+}
+
+.join-movement-title {
+  color: #ffffff;
+  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.45);
+}
+
+.join-movement-subtitle {
+  color: rgba(241, 245, 249, 0.92);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+}
+
+.play-store-hero-cta {
+  color: #f8fafc;
+  background: linear-gradient(135deg, #131722 0%, #0f172a 45%, #1f2937 100%);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 28px -18px rgba(15, 23, 42, 0.9);
+}
+
+.play-store-hero-cta:hover {
+  color: #ffffff;
+  background: linear-gradient(135deg, #1a2332 0%, #172036 45%, #273449 100%);
+  border-color: rgba(148, 163, 184, 0.55);
+}
+
+body.light-theme .join-movement-overlay {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.62) 0%, rgba(248, 250, 252, 0.7) 50%, rgba(238, 242, 255, 0.66) 100%),
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.18), transparent 60%);
+}
+
+body.light-theme .join-movement-title {
+  color: #0f172a;
+  text-shadow: none;
+}
+
+body.light-theme .join-movement-subtitle {
+  color: #334155;
+  text-shadow: none;
+}
+
+body.light-theme .play-store-hero-cta {
+  color: #f8fafc;
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+  border-color: rgba(100, 116, 139, 0.45);
 }

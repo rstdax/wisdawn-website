@@ -516,9 +516,9 @@ export function Home() {
                     className="flex-1 h-full overflow-y-auto overflow-x-hidden relative scroll-smooth bg-[#09090b]"
                     id="main-scroll-container"
                 >
-                    <div className="min-h-full p-4 sm:p-6 lg:p-12 pb-28 sm:pb-32 max-w-[1600px] mx-auto w-full relative flex flex-col">
+                    <div className="min-h-full p-4 sm:p-6 lg:p-12 max-w-[1600px] mx-auto w-full relative flex flex-col">
 
-                        <div className="flex-1">
+                        <div className="flex-1 pb-28 sm:pb-32">
                             <AnimatePresence mode="wait">
                                 {currentView === 'dashboard' && (
                                     <motion.div

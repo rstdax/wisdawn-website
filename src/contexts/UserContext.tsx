@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User, updateProfile } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { auth, hasInvalidFirebaseConfig } from "../lib/firebase";
 import { getUserProfile, upsertUserProfile } from "../lib/firestore";
 
 export interface WorkshopData {
@@ -82,6 +82,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [userData, setUserData] = useState<UserData>(initialUserData);
 
   useEffect(() => {
+    if (hasInvalidFirebaseConfig) {
+      setCurrentUser(null);
+      setUserData(initialUserData);
+      setLoadingAuth(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
 

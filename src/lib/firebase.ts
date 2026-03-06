@@ -40,7 +40,16 @@ if (hasInvalidFirebaseConfig) {
   );
 }
 
-export const app = initializeApp(firebaseConfig);
+const firebaseConfigForInit = {
+  apiKey: firebaseConfig.apiKey || "missing-api-key",
+  authDomain: firebaseConfig.authDomain || "missing-auth-domain.firebaseapp.com",
+  projectId: firebaseConfig.projectId || "missing-project-id",
+  storageBucket: firebaseConfig.storageBucket || "missing-project-id.appspot.com",
+  messagingSenderId: firebaseConfig.messagingSenderId || "000000000000",
+  appId: firebaseConfig.appId || "1:000000000000:web:missingappid",
+};
+
+export const app = initializeApp(firebaseConfigForInit);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);

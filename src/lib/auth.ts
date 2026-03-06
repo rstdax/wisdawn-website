@@ -24,6 +24,9 @@ function extractFirebaseErrorDetails(error: unknown) {
 }
 
 export async function signUpWithEmail(email: string, password: string) {
+  if (hasInvalidFirebaseConfig) {
+    throw { code: "app/firebase-config-missing" };
+  }
   return createUserWithEmailAndPassword(auth, email, password);
 }
 

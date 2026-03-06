@@ -114,7 +114,7 @@ export function LandingPage({
     }, [nextMobileImage])
 
     return (
-        <div className="min-h-screen bg-bg-dark text-white selection:bg-white/20 overflow-x-hidden relative">
+        <div className="min-h-screen bg-bg-dark text-white selection:bg-white/20 overflow-x-hidden relative flex flex-col">
             {/* Ambient Base Gradients */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px]" />
@@ -176,7 +176,7 @@ export function LandingPage({
                 </AnimatePresence>
             </header>
 
-            <main className="relative z-10 pt-24 sm:pt-32 lg:pt-48 pb-16 sm:pb-20 px-4 sm:px-6 max-w-7xl mx-auto">
+            <main className="relative z-10 pt-24 sm:pt-32 lg:pt-48 px-4 sm:px-6 max-w-7xl mx-auto w-full">
                 {/* Hero Section */}
                 <motion.section
                     variants={stagger}
@@ -214,7 +214,7 @@ export function LandingPage({
                                 href={PLAY_STORE_URL}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#1a1a1a] border border-white/20 text-white font-medium text-base flex items-center justify-center gap-3 hover:bg-[#252525] hover:border-white/30 transition-all group"
+                                className="play-store-hero-cta w-full sm:w-auto px-6 py-3.5 rounded-full font-medium text-base flex items-center justify-center gap-3 transition-all group"
                             >
                                 <div className="flex items-center justify-center">
                                     <GooglePlayIcon size={24} className="shrink-0" />
@@ -553,25 +553,20 @@ export function LandingPage({
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
-                        className="w-full aspect-video sm:aspect-[21/9] rounded-2xl sm:rounded-3xl overflow-hidden relative"
+                        className="join-movement-card w-full aspect-video sm:aspect-[21/9] rounded-2xl sm:rounded-3xl overflow-hidden relative"
                     >
-                        <div className="absolute inset-0 bg-blue-900/20 mix-blend-overlay z-10" />
-                        <img
-                            src="/team-photo.jpeg"
-                            alt="Our Team"
-                            className="w-full h-full object-cover grayscale opacity-60"
-                        />
-                        <div className="absolute inset-0 z-20 flex items-center justify-center p-4 sm:p-8 text-center bg-black/40">
+                        <div className="join-movement-overlay absolute inset-0 z-10" />
+                        <div className="absolute inset-0 z-20 flex items-center justify-center p-4 sm:p-8 text-center">
                             <div>
-                                <h2 className="text-xl sm:text-3xl font-bold mb-2 sm:mb-4">Join the Movement</h2>
-                                <p className="text-neutral-300 max-w-lg mx-auto text-sm sm:text-base">We're always looking for brilliant educators, developers, and designers to join our core team.</p>
+                                <h2 className="join-movement-title text-xl sm:text-3xl font-bold mb-2 sm:mb-4">Join the Movement</h2>
+                                <p className="join-movement-subtitle max-w-lg mx-auto text-sm sm:text-base">We're always looking for brilliant educators, developers, and designers to join our core team.</p>
                             </div>
                         </div>
                     </motion.div>
                 </section>
 
                 {/* Contact Us Section */}
-                <section id="contact-us" className="mt-20 sm:mt-32 pt-12 sm:pt-20 border-t border-white/5 flex flex-col lg:flex-row gap-10 sm:gap-16 lg:gap-24">
+                <section id="contact-us" className="mt-20 sm:mt-32 pt-12 sm:pt-20 border-t border-white/5 flex flex-col lg:flex-row gap-10 sm:gap-16 lg:gap-24 pb-0 mb-0">
                     {/* Contact Information */}
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
@@ -674,7 +669,7 @@ export function LandingPage({
             </main>
 
             {/* Footer */}
-            <footer className="border-t border-white/5 bg-black/40 mt-12 sm:mt-20 relative z-10">
+            <footer className="border-t border-white/5 bg-black/40 relative z-10 shrink-0 mt-auto">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
                     <div className="flex items-center gap-3 text-center md:text-left">
                         <img src="/logo.png?v=3" alt="WisDawn Logo" className="w-6 h-6 rounded-md object-cover shrink-0" />
