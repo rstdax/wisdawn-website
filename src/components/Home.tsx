@@ -197,13 +197,10 @@ export function Home() {
 
     const userLatitude = toFiniteNumber(userData.latitude)
     const userLongitude = toFiniteNumber(userData.longitude)
-    const userLocalityKey = normalizeLocationKey(userData.location || "")
 
-    const matchesLocality = (params: {
+    const matchesLocalityByRadius = (params: {
         latitude?: number | string | null
         longitude?: number | string | null
-        localityKey?: string
-        location?: string
     }) => {
         const itemLatitude = toFiniteNumber(params.latitude)
         const itemLongitude = toFiniteNumber(params.longitude)
@@ -215,47 +212,38 @@ export function Home() {
         ) {
             return haversineKm(userLatitude, userLongitude, itemLatitude, itemLongitude) <= LOCALITY_RADIUS_KM
         }
-        const itemLocalityKey = (params.localityKey || normalizeLocationKey(params.location || "")).trim()
-        if (userLocalityKey && itemLocalityKey) {
-            return userLocalityKey === itemLocalityKey
-        }
         return false
     }
 
     const localWorkshops = baseFilteredWorkshops.filter(w =>
-        matchesLocality({
+        matchesLocalityByRadius({
             latitude: w.latitude,
             longitude: w.longitude,
-            localityKey: w.localityKey,
-            location: w.location,
         })
     )
     const localDoubts = baseFilteredDoubts.filter(d =>
-        matchesLocality({
+        matchesLocalityByRadius({
             latitude: d.latitude,
             longitude: d.longitude,
-            localityKey: d.localityKey,
-            location: d.location,
         })
     )
 
     const hasUserCoords = userLatitude !== null && userLongitude !== null
-    const hasLocalityContext = hasUserCoords || Boolean(userLocalityKey)
     const filteredWorkshops = filter === "GLOBAL"
         ? baseFilteredWorkshops
-        : (hasLocalityContext ? localWorkshops : [])
+        : (hasUserCoords ? localWorkshops : [])
     const filteredDoubts = filter === "GLOBAL"
         ? baseFilteredDoubts
-        : (hasLocalityContext ? localDoubts : [])
+        : (hasUserCoords ? localDoubts : [])
     const visibleDoubts = filteredDoubts.slice(0, visibleDoubtsCount)
 
     const closeSidebar = () => setMobileSidebarOpen(false)
 
     useEffect(() => {
-        if (filter === "LOCALITY" && !hasLocalityContext && !showLocationPopup && !locationPromptDismissed) {
+        if (filter === "LOCALITY" && !hasUserCoords && !showLocationPopup && !locationPromptDismissed) {
             setShowLocationPopup(true)
         }
-    }, [filter, hasLocalityContext, showLocationPopup, locationPromptDismissed])
+    }, [filter, hasUserCoords, showLocationPopup, locationPromptDismissed])
 
     useEffect(() => {
         if (!joinedToast.visible) {
@@ -563,7 +551,7 @@ export function Home() {
                                             <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/10 rounded-2xl w-fit">
                                                 <button
                                                     onClick={() => {
-                                                        if (!hasLocalityContext) {
+                                                        if (!hasUserCoords) {
                                                             setLocationPromptDismissed(false)
                                                             setShowLocationPopup(true)
                                                             return
@@ -594,7 +582,7 @@ export function Home() {
                                                     <div>
                                                         <h2 className="text-2xl font-semibold tracking-tight text-white mb-1">Workshops</h2>
                                                         <p className="text-sm text-neutral-400 leading-relaxed">Join interactive workshops and enhance your skills {filter === "LOCALITY" ? "near you" : "worldwide"}.</p>
-                                                        {filter === "LOCALITY" && !hasLocalityContext && (
+                                                        {filter === "LOCALITY" && !hasUserCoords && (
                                                             <p className="text-xs text-amber-400 mt-1">Enable precise location to view uploads within 10km.</p>
                                                         )}
                                                     </div>
@@ -678,7 +666,7 @@ export function Home() {
                                                     <div>
                                                         <h2 className="text-2xl font-semibold tracking-tight text-white mb-1">Trending Doubts</h2>
                                                         <p className="text-sm text-neutral-400 leading-relaxed">Help resolving questions from the community {filter === "LOCALITY" ? "in your area" : "around the globe"}.</p>
-                                                        {filter === "LOCALITY" && !hasLocalityContext && (
+                                                        {filter === "LOCALITY" && !hasUserCoords && (
                                                             <p className="text-xs text-amber-400 mt-1">Enable precise location to view uploads within 10km.</p>
                                                         )}
                                                     </div>
@@ -1007,6 +995,12 @@ export function Home() {
                                                 userLatitude !== null && userLongitude !== null
                                                     ? { latitude: userLatitude, longitude: userLongitude }
                                                     : await resolveCoordinatesFromLocation(userData.location || "")
+                                            if (fallbackCoords.latitude === null || fallbackCoords.longitude === null) {
+                                                setDoubtPostError("Precise location is required. Enable location access before posting.")
+                                                setShowLocationPopup(true)
+                                                setLocationPromptDismissed(false)
+                                                return
+                                            }
                                             const attachmentUrls = await uploadFiles(
                                                 `post_images/${doubtId}`,
                                                 doubtFiles,
@@ -1112,6 +1106,12 @@ export function Home() {
                                                 userLatitude !== null && userLongitude !== null
                                                     ? { latitude: userLatitude, longitude: userLongitude }
                                                     : await resolveCoordinatesFromLocation(userData.location || "");
+                                            if (fallbackCoords.latitude === null || fallbackCoords.longitude === null) {
+                                                setLocationPopupError("Precise location is required to host a workshop.")
+                                                setShowLocationPopup(true)
+                                                setLocationPromptDismissed(false)
+                                                return
+                                            }
                                             const newWorkshop: WorkshopData & { hostUid: string } = {
                                                 id: Date.now(),
                                                 name: formData.get('title') as string,

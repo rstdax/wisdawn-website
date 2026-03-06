@@ -66,6 +66,37 @@ export function Location({ onNext }: { onNext: () => void }) {
         return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
     }
 
+    const resolveCoordinatesFromLocation = async (locationText: string) => {
+        if (!locationText.trim()) {
+            return { latitude: null, longitude: null }
+        }
+
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(locationText)}&limit=1`
+            )
+            if (!response.ok) {
+                throw new Error("Failed forward geocode")
+            }
+
+            const results = await response.json() as Array<{ lat?: string; lon?: string }>
+            const first = results[0]
+            if (!first?.lat || !first?.lon) {
+                return { latitude: null, longitude: null }
+            }
+
+            const latitude = Number(first.lat)
+            const longitude = Number(first.lon)
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                return { latitude: null, longitude: null }
+            }
+
+            return { latitude, longitude }
+        } catch {
+            return { latitude: null, longitude: null }
+        }
+    }
+
     const handleUsePreciseLocation = () => {
         setLocationMessage("")
 
@@ -110,17 +141,29 @@ export function Location({ onNext }: { onNext: () => void }) {
         )
     }
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (!location.trim()) {
             setError(true)
+            return
+        }
+
+        let nextCoords = coords
+        if (nextCoords.latitude === null || nextCoords.longitude === null) {
+            nextCoords = await resolveCoordinatesFromLocation(location)
+        }
+
+        if (nextCoords.latitude === null || nextCoords.longitude === null) {
+            setError(true)
+            setLocationMessageType("error")
+            setLocationMessage("Unable to resolve exact coordinates. Use Precise Location to continue.")
             return
         }
 
         setError(false)
         updateUserData({
             location,
-            latitude: coords.latitude,
-            longitude: coords.longitude,
+            latitude: nextCoords.latitude,
+            longitude: nextCoords.longitude,
         })
         onNext()
     }
