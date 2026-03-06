@@ -108,7 +108,7 @@ export default function App() {
   }
 
   if (loadingAuth) {
-    return <div className="min-h-screen bg-[#09090b]" />
+    return <div className="min-h-dvh bg-[#09090b]" />
   }
 
   if (showLanding) {
@@ -159,7 +159,7 @@ export default function App() {
   return (
     <>
       <ThemeToggle variant="floating" />
-      <div className="min-h-screen bg-[#09090b] text-white flex items-center justify-center p-4 md:p-8 relative overflow-hidden selection:bg-white/20">
+      <div className="min-h-dvh bg-[#09090b] text-white flex items-center justify-center p-4 md:p-8 relative overflow-hidden selection:bg-white/20">
 
         {/* Main Container */}
         <motion.div

@@ -173,7 +173,7 @@ export function LandingPage({
     }, [nextMobileImage, mobileSliderInView, reduceMotion])
 
     return (
-        <div className="min-h-screen bg-bg-dark text-white selection:bg-white/20 overflow-x-hidden relative flex flex-col">
+        <div className="min-h-dvh bg-bg-dark text-white selection:bg-white/20 overflow-x-hidden relative flex flex-col">
             {/* Ambient Base Gradients */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-3xl" />
