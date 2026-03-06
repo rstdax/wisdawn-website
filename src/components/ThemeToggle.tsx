@@ -63,14 +63,21 @@ export function ThemeToggle({ variant = "floating" }: { variant?: ThemeToggleVar
   }
 
   const selectedIndex = THEME_MODES.indexOf(themeMode)
-  const wrapperClassName =
-    variant === "header"
-      ? "w-[132px] h-10"
-      : "fixed bottom-6 right-6 z-[100] w-[150px] h-11"
+  const wrapperClassName = variant === "header" ? "w-[132px] h-10" : "w-[150px] h-11"
+  const wrapperStyle =
+    variant === "floating"
+      ? {
+          position: "fixed" as const,
+          right: "max(1rem, env(safe-area-inset-right))",
+          bottom: "max(1rem, env(safe-area-inset-bottom))",
+          zIndex: 100,
+        }
+      : undefined
 
   return (
     <div
       className={`${wrapperClassName} relative grid grid-cols-3 items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-xl shadow-2xl p-1`}
+      style={wrapperStyle}
       role="group"
       aria-label="Theme mode toggle"
     >
