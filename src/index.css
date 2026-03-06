@@ -224,6 +224,55 @@ body.light-theme .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(15, 23, 42, 0.35);
 }
 
+.focus-timer-track {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+.focus-timer-progress {
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+}
+
+body.light-theme .focus-timer-card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+body.light-theme .focus-timer-track {
+  stroke: rgba(15, 23, 42, 0.14);
+}
+
+body.light-theme .focus-timer-progress {
+  stroke: #2563eb;
+  filter: drop-shadow(0 0 10px rgba(37, 99, 235, 0.25));
+}
+
+body.light-theme .focus-timer-value {
+  color: #0f172a !important;
+}
+
+body.light-theme .focus-timer-state {
+  color: #64748b !important;
+}
+
+body.light-theme .focus-timer-shortcut-idle {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+body.light-theme .focus-timer-shortcut-idle:hover {
+  background-color: #eef2f7 !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.2) !important;
+}
+
+body.light-theme .focus-timer-shortcut-active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
 .join-movement-card {
   background-image: url("/team-photo.jpeg");
   background-size: cover;

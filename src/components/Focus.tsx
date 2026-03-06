@@ -173,7 +173,7 @@ export function Focus({ onClose }: { onClose: () => void }) {
 
             <div className="flex-1 p-6 flex flex-col gap-8">
                 {/* Timer Section */}
-                <div className="flex flex-col items-center justify-center p-6 border border-white/5 rounded-3xl bg-[#18181b]/50 relative overflow-hidden shrink-0">
+                <div className="focus-timer-card flex flex-col items-center justify-center p-6 border border-white/5 rounded-3xl bg-[#18181b]/50 relative overflow-hidden shrink-0">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02),transparent_70%)] pointer-events-none" />
 
                     {/* Circular Timer Display */}
@@ -204,7 +204,7 @@ export function Focus({ onClose }: { onClose: () => void }) {
                                 cy="110"
                                 r={radius}
                                 fill="transparent"
-                                stroke="rgba(255,255,255,0.05)"
+                                className="focus-timer-track"
                                 strokeWidth="6"
                             />
                             {/* Active time track */}
@@ -213,13 +213,12 @@ export function Focus({ onClose }: { onClose: () => void }) {
                                 cy="110"
                                 r={radius}
                                 fill="transparent"
-                                stroke="#ffffff"
+                                className="focus-timer-progress"
                                 strokeWidth="6"
                                 strokeLinecap="round"
                                 strokeDasharray={circumference}
                                 animate={{ strokeDashoffset: progressOffset }}
                                 transition={{ duration: isDragging ? 0.05 : 0.5, ease: isDragging ? "linear" : "easeOut" }}
-                                className="drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
                             />
                         </svg>
 
@@ -228,12 +227,12 @@ export function Focus({ onClose }: { onClose: () => void }) {
                                 key={timeLeft}
                                 initial={{ opacity: 0.5, y: -2 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="text-4xl font-light tracking-tighter text-white font-mono"
+                                className="focus-timer-value text-4xl font-light tracking-tighter text-white font-mono"
                                 style={{ fontVariantNumeric: "tabular-nums" }}
                             >
                                 {formatTime(timeLeft)}
                             </motion.div>
-                            <p className="text-neutral-500 text-[10px] font-medium tracking-widest uppercase mt-1">
+                            <p className="focus-timer-state text-neutral-500 text-[10px] font-medium tracking-widest uppercase mt-1">
                                 {isActive ? "Focusing" : "Paused"}
                             </p>
                         </div>
@@ -271,10 +270,10 @@ export function Focus({ onClose }: { onClose: () => void }) {
                                 key={min}
                                 onClick={() => setTimer(min)}
                                 className={cn(
-                                    "py-2 rounded-xl text-xs font-semibold transition-all duration-300 border",
+                                    "focus-timer-shortcut py-2 rounded-xl text-xs font-semibold transition-all duration-300 border",
                                     totalTime === min * 60
-                                        ? "bg-white text-black border-white shadow-sm"
-                                        : "bg-[#09090b] text-neutral-400 border-white/5 hover:text-white hover:border-white/20 hover:bg-white/5"
+                                        ? "focus-timer-shortcut-active bg-white text-black border-white shadow-sm"
+                                        : "focus-timer-shortcut-idle bg-[#09090b] text-neutral-400 border-white/5 hover:text-white hover:border-white/20 hover:bg-white/5"
                                 )}
                             >
                                 {min}m
