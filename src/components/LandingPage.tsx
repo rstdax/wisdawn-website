@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react"
-import { motion, AnimatePresence, type Variants } from "framer-motion"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { motion, AnimatePresence, useInView, useReducedMotion, type Variants } from "framer-motion"
 import { ArrowRight, Sparkles, Brain, Globe, Zap, Users, Shield, Target, ChevronLeft, ChevronRight, Mail, MapPin, Phone, MessageSquare, Award, Menu, X, Smartphone, ExternalLink } from "lucide-react"
 import { cn } from "../lib/utils"
 import { ThemeToggle } from "./ThemeToggle"
@@ -40,6 +40,19 @@ const stagger: Variants = {
 }
 
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.rst.wisdawn"
+const AUTOPLAY_INTERVAL_MS = 4500
+const previewImages = [
+    "/app-preview-1.jpg",
+    "/app-preview-2.jpg",
+    "/app-preview-3.jpg",
+    "/app-preview-4.jpg"
+]
+const mobilePreviewImages = [
+    "/mobile-preview-1.jpg",
+    "/mobile-preview-2.jpeg",
+    "/mobile-preview-3.jpeg",
+    "/mobile-preview-4.jpeg"
+]
 
 export function LandingPage({
     onLogin,
@@ -53,23 +66,13 @@ export function LandingPage({
     showThemeToggle?: boolean
 }) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
-
-    const previewImages = [
-        "/app-preview-1.png",
-        "/app-preview-2.png",
-        "/app-preview-3.png",
-        "/app-preview-4.png"
-    ]
-
-    const mobilePreviewImages = [
-        "/mobile-preview-1.png",
-        "/mobile-preview-2.jpeg",
-        "/mobile-preview-3.jpeg",
-        "/mobile-preview-4.jpeg"
-    ]
-
     const [currentMobileIndex, setCurrentMobileIndex] = useState(0)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const desktopSliderRef = useRef<HTMLElement | null>(null)
+    const mobileSliderRef = useRef<HTMLElement | null>(null)
+    const desktopSliderInView = useInView(desktopSliderRef, { margin: "-20% 0px -20% 0px" })
+    const mobileSliderInView = useInView(mobileSliderRef, { margin: "-20% 0px -20% 0px" })
+    const reduceMotion = useReducedMotion()
 
     const nextImage = useCallback(() => {
         setCurrentImageIndex((prev) => (prev + 1) % previewImages.length)
@@ -100,32 +103,36 @@ export function LandingPage({
 
     // Auto-advance sliders
     useEffect(() => {
+        if (reduceMotion || !desktopSliderInView) return
         const interval = setInterval(() => {
+            if (document.hidden) return
             nextImage()
-        }, 2000)
+        }, AUTOPLAY_INTERVAL_MS)
         return () => clearInterval(interval)
-    }, [nextImage])
+    }, [nextImage, desktopSliderInView, reduceMotion])
 
     useEffect(() => {
+        if (reduceMotion || !mobileSliderInView) return
         const interval = setInterval(() => {
+            if (document.hidden) return
             nextMobileImage()
-        }, 2000)
+        }, AUTOPLAY_INTERVAL_MS)
         return () => clearInterval(interval)
-    }, [nextMobileImage])
+    }, [nextMobileImage, mobileSliderInView, reduceMotion])
 
     return (
         <div className="min-h-screen bg-bg-dark text-white selection:bg-white/20 overflow-x-hidden relative flex flex-col">
             {/* Ambient Base Gradients */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]" />
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-3xl" />
             </div>
 
             {/* Header */}
-            <header className="fixed top-0 w-full border-b border-white/5 bg-bg-dark/80 backdrop-blur-xl z-50">
+            <header className="fixed top-0 w-full border-b border-white/5 bg-bg-dark/90 backdrop-blur-sm z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src="/logo.png?v=3" alt="WisDawn Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover shrink-0" />
+                        <img src="/logo.jpeg" alt="WisDawn Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover shrink-0" width={32} height={32} />
                         <span className="text-lg sm:text-xl font-bold tracking-tight">Wis<span className="text-neutral-400">Dawn</span></span>
                     </div>
                     <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-neutral-400">
@@ -159,7 +166,7 @@ export function LandingPage({
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="md:hidden border-t border-white/5 bg-bg-dark/95 backdrop-blur-xl overflow-hidden"
+                            className="md:hidden border-t border-white/5 bg-bg-dark/95 backdrop-blur-sm overflow-hidden"
                         >
                             <nav className="flex flex-col px-4 py-4 gap-1">
                                 <a href="#features" className="py-3 text-neutral-400 hover:text-white transition-colors cursor-pointer" onClick={(e) => handleMobileNavClick(e, "features")}>Features</a>
@@ -232,18 +239,17 @@ export function LandingPage({
                     >
                         <div className="relative w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80">
                             {/* Glow effect behind character */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-2xl" />
                             
                             {/* Character video */}
-                            <motion.video
+                            <video
                                 src="/logo.mp4?v=2"
                                 autoPlay
                                 loop
                                 muted
                                 playsInline
+                                preload="metadata"
                                 className="relative w-full h-full object-cover rounded-3xl shadow-2xl"
-                                animate={{ y: [0, -20, 0] }}
-                                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
                             />
                         </div>
                     </motion.div>
@@ -251,13 +257,14 @@ export function LandingPage({
 
                 {/* App Interface Card Slider */}
                 <motion.section
+                    ref={desktopSliderRef}
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6, duration: 1, type: "spring" }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
                     className="mt-16 sm:mt-24 md:mt-32 relative mx-auto max-w-6xl px-2 sm:px-4 group"
                 >
                     <div className="relative min-h-[200px] sm:min-h-[280px] md:min-h-[340px] flex items-center justify-center">
-                        <AnimatePresence initial={false} mode="popLayout">
+                        <AnimatePresence initial={false}>
                             {previewImages.map((src, idx) => {
                                 // Calculate distance from center to scale and position cards
                                 const offset = idx - currentImageIndex;
@@ -270,17 +277,15 @@ export function LandingPage({
                                 return (
                                     <motion.div
                                         key={src}
-                                        initial={{ opacity: 0, x: offset > 0 ? 1000 : -1000, scale: 0.5 }}
+                                        initial={reduceMotion ? false : { opacity: 0, x: offset > 0 ? 180 : -180, scale: 0.92 }}
                                         animate={{
-                                            opacity: 1 - Math.abs(offset) * 0.15,
-                                            x: offset * 140, // Spread out further to see the rotation
-                                            y: Math.abs(offset) * 40, // Drop down in an arc
-                                            rotate: offset * 8, // Fan rotation angle
-                                            scale: 1 - Math.abs(offset) * 0.05,
+                                            opacity: 1 - Math.abs(offset) * 0.12,
+                                            x: offset * 110,
+                                            scale: 1 - Math.abs(offset) * 0.04,
                                             zIndex
                                         }}
-                                        exit={{ opacity: 0, scale: 0.5 }}
-                                        transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 30 }}
+                                        exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92 }}
+                                        transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
                                         className={`absolute w-[90vw] sm:w-[80vw] max-w-4xl aspect-video rounded-2xl sm:rounded-3xl border ${isCenter ? 'border-white/20 shadow-[0_0_100px_rgba(40,100,255,0.2)]' : 'border-white/5'} bg-[#18181b] overflow-hidden cursor-pointer`}
                                         onClick={() => {
                                             if (offset !== 0) setCurrentImageIndex(idx)
@@ -290,7 +295,11 @@ export function LandingPage({
                                         <img
                                             src={src}
                                             alt={`Platform Preview ${idx + 1}`}
-                                            className={`w-full h-full object-cover transition-all duration-700 ${isCenter ? 'mix-blend-normal' : 'mix-blend-luminosity'}`}
+                                            loading={isCenter ? "eager" : "lazy"}
+                                            decoding="async"
+                                            fetchPriority={isCenter ? "high" : "auto"}
+                                            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 80vw, 1024px"
+                                            className="w-full h-full object-cover transition-all duration-500"
                                         />
 
                                         {/* Overlay UI elements only on center card */}
@@ -301,12 +310,12 @@ export function LandingPage({
                                                 transition={{ delay: 0.3 }}
                                                 className="absolute inset-x-10 bottom-10 z-20 hidden md:flex justify-between items-end pointer-events-none"
                                             >
-                                                <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-64 shadow-2xl">
+                                                <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-4 w-64 shadow-2xl">
                                                     <div className="w-10 h-10 rounded-full bg-white/20 mb-3" />
                                                     <div className="h-2 w-3/4 bg-white/20 rounded-full mb-2" />
                                                     <div className="h-2 w-1/2 bg-white/20 rounded-full" />
                                                 </div>
-                                                <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl p-4 w-48 shadow-2xl flex flex-col items-center">
+                                                <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-4 w-48 shadow-2xl flex flex-col items-center">
                                                     <Target className="text-blue-400 mb-2" size={32} />
                                                     <div className="h-3 w-1/2 bg-white/30 rounded-full mb-1" />
                                                     <div className="text-xs text-white/50">Focus Mode</div>
@@ -322,13 +331,13 @@ export function LandingPage({
                         <div className="absolute inset-y-0 left-0 right-0 z-30 flex items-center justify-between px-2 sm:px-10 pointer-events-none">
                             <button
                                 onClick={prevImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-xl border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 group-hover:opacity-100"
+                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 group-hover:opacity-100"
                             >
                                 <ChevronLeft size={24} />
                             </button>
                             <button
                                 onClick={nextImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-xl border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 group-hover:opacity-100"
+                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 group-hover:opacity-100"
                             >
                                 <ChevronRight size={24} />
                             </button>
@@ -350,10 +359,11 @@ export function LandingPage({
 
                 {/* Mobile App Interface Card Slider */}
                 <motion.section
+                    ref={mobileSliderRef}
                     initial={{ opacity: 0, y: 50 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
-                    transition={{ duration: 1, type: "spring" }}
+                    transition={{ duration: 0.6 }}
                     className="mt-20 sm:mt-32 relative mx-auto max-w-5xl px-2 sm:px-4 group"
                 >
                     <div className="text-center mb-8 sm:mb-12 px-2">
@@ -362,7 +372,7 @@ export function LandingPage({
                     </div>
 
                     <div className="relative min-h-[380px] sm:min-h-[480px] md:min-h-[550px] flex items-center justify-center">
-                        <AnimatePresence initial={false} mode="popLayout">
+                        <AnimatePresence initial={false}>
                             {mobilePreviewImages.map((src, idx) => {
                                 const offset = idx - currentMobileIndex;
                                 const isCenter = offset === 0;
@@ -373,17 +383,15 @@ export function LandingPage({
                                 return (
                                     <motion.div
                                         key={src}
-                                        initial={{ opacity: 0, x: offset > 0 ? 500 : -500, scale: 0.5 }}
+                                        initial={reduceMotion ? false : { opacity: 0, x: offset > 0 ? 140 : -140, scale: 0.92 }}
                                         animate={{
-                                            opacity: 1 - Math.abs(offset) * 0.15,
-                                            x: offset * 60, // Tighter horizontal spread for portrait cards
-                                            y: Math.abs(offset) * 20, // Gentle arc
-                                            rotate: offset * 6, // Less extreme fan rotation for portrait
-                                            scale: 1 - Math.abs(offset) * 0.05,
+                                            opacity: 1 - Math.abs(offset) * 0.12,
+                                            x: offset * 54,
+                                            scale: 1 - Math.abs(offset) * 0.04,
                                             zIndex
                                         }}
-                                        exit={{ opacity: 0, scale: 0.5 }}
-                                        transition={{ duration: 0.5, type: "spring", stiffness: 300, damping: 30 }}
+                                        exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92 }}
+                                        transition={{ duration: reduceMotion ? 0 : 0.35, ease: "easeOut" }}
                                         className={`absolute w-44 sm:w-56 md:w-64 aspect-[9/19] rounded-[2rem] sm:rounded-[2.5rem] border-4 sm:border-[6px] ${isCenter ? 'border-neutral-800 shadow-[0_0_100px_rgba(168,85,247,0.2)]' : 'border-neutral-900'} bg-[#18181b] overflow-hidden cursor-pointer`}
                                         onClick={() => {
                                             if (offset !== 0) setCurrentMobileIndex(idx)
@@ -396,7 +404,11 @@ export function LandingPage({
                                         <img
                                             src={src}
                                             alt={`Mobile Preview ${idx + 1}`}
-                                            className={`w-full h-full object-cover transition-all duration-700 pt-6 ${isCenter ? 'mix-blend-normal' : 'mix-blend-luminosity'}`}
+                                            loading={isCenter ? "eager" : "lazy"}
+                                            decoding="async"
+                                            fetchPriority={isCenter ? "high" : "auto"}
+                                            sizes="(max-width: 640px) 176px, (max-width: 1024px) 224px, 256px"
+                                            className="w-full h-full object-cover transition-all duration-500 pt-6"
                                         />
                                     </motion.div>
                                 )
@@ -407,13 +419,13 @@ export function LandingPage({
                         <div className="absolute inset-y-0 left-0 right-0 z-30 flex items-center justify-between px-2 sm:px-10 pointer-events-none">
                             <button
                                 onClick={prevMobileImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-xl border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 xl:opacity-100 group-hover:opacity-100"
+                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 xl:opacity-100 group-hover:opacity-100"
                             >
                                 <ChevronLeft size={24} />
                             </button>
                             <button
                                 onClick={nextMobileImage}
-                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-xl border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 xl:opacity-100 group-hover:opacity-100"
+                                className="pointer-events-auto p-3 sm:p-4 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-sm border border-white/20 text-white transition-all transform hover:scale-110 active:scale-95 shadow-xl opacity-0 xl:opacity-100 group-hover:opacity-100"
                             >
                                 <ChevronRight size={24} />
                             </button>
@@ -617,7 +629,7 @@ export function LandingPage({
                         className="flex-1 bg-white/5 border border-white/5 p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] relative overflow-hidden"
                     >
                         {/* Subtle glow behind form */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
                         <form className="relative z-10 space-y-6" onSubmit={(e) => e.preventDefault()}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -672,7 +684,7 @@ export function LandingPage({
             <footer className="border-t border-white/5 bg-black/40 relative z-10 shrink-0 mt-auto">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
                     <div className="flex items-center gap-3 text-center md:text-left">
-                        <img src="/logo.png?v=3" alt="WisDawn Logo" className="w-6 h-6 rounded-md object-cover shrink-0" />
+                        <img src="/logo.jpeg" alt="WisDawn Logo" className="w-6 h-6 rounded-md object-cover shrink-0" width={24} height={24} />
                         <span className="font-medium text-xs sm:text-sm text-neutral-400">© 2026 WisDawn. All rights reserved.</span>
                     </div>
                     <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm font-medium text-neutral-500">
