@@ -201,7 +201,11 @@ export function Home() {
     const matchesLocalityByRadius = (params: {
         latitude?: number | string | null
         longitude?: number | string | null
+        locationSource?: "precise" | "approx"
     }) => {
+        if (params.locationSource !== "precise") {
+            return false
+        }
         const itemLatitude = toFiniteNumber(params.latitude)
         const itemLongitude = toFiniteNumber(params.longitude)
         if (
@@ -219,12 +223,14 @@ export function Home() {
         matchesLocalityByRadius({
             latitude: w.latitude,
             longitude: w.longitude,
+            locationSource: w.locationSource,
         })
     )
     const localDoubts = baseFilteredDoubts.filter(d =>
         matchesLocalityByRadius({
             latitude: d.latitude,
             longitude: d.longitude,
+            locationSource: d.locationSource,
         })
     )
 
@@ -305,33 +311,6 @@ export function Home() {
             // Fallback below.
         }
         return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
-    }
-
-    const resolveCoordinatesFromLocation = async (locationText: string) => {
-        if (!locationText.trim()) {
-            return { latitude: null, longitude: null }
-        }
-        try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(locationText)}&limit=1`
-            )
-            if (!response.ok) {
-                throw new Error("forward geocode failed")
-            }
-            const results = await response.json() as Array<{ lat?: string, lon?: string }>
-            const first = results[0]
-            if (!first?.lat || !first?.lon) {
-                return { latitude: null, longitude: null }
-            }
-            const latitude = Number(first.lat)
-            const longitude = Number(first.lon)
-            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-                return { latitude: null, longitude: null }
-            }
-            return { latitude, longitude }
-        } catch {
-            return { latitude: null, longitude: null }
-        }
     }
 
     const requestPreciseLocation = () => {
@@ -987,15 +966,12 @@ export function Home() {
                                         localityKey: normalizeLocationKey(userData.location || ""),
                                         latitude: userData.latitude,
                                         longitude: userData.longitude,
+                                        locationSource: "precise" as const,
                                     };
 
                                     void (async () => {
                                         try {
-                                            const fallbackCoords =
-                                                userLatitude !== null && userLongitude !== null
-                                                    ? { latitude: userLatitude, longitude: userLongitude }
-                                                    : await resolveCoordinatesFromLocation(userData.location || "")
-                                            if (fallbackCoords.latitude === null || fallbackCoords.longitude === null) {
+                                            if (userLatitude === null || userLongitude === null) {
                                                 setDoubtPostError("Precise location is required. Enable location access before posting.")
                                                 setShowLocationPopup(true)
                                                 setLocationPromptDismissed(false)
@@ -1009,8 +985,8 @@ export function Home() {
                                                 ...newDoubt,
                                                 attachmentUrls,
                                                 imageUrl: attachmentUrls[0] ?? null,
-                                                latitude: fallbackCoords.latitude,
-                                                longitude: fallbackCoords.longitude,
+                                                latitude: userLatitude,
+                                                longitude: userLongitude,
                                             });
                                             setIsPostQuestionOpen(false);
                                             setDoubtFiles([]);
@@ -1102,11 +1078,7 @@ export function Home() {
                                         try {
                                             const today = new Date();
                                             const formattedDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                            const fallbackCoords =
-                                                userLatitude !== null && userLongitude !== null
-                                                    ? { latitude: userLatitude, longitude: userLongitude }
-                                                    : await resolveCoordinatesFromLocation(userData.location || "");
-                                            if (fallbackCoords.latitude === null || fallbackCoords.longitude === null) {
+                                            if (userLatitude === null || userLongitude === null) {
                                                 setLocationPopupError("Precise location is required to host a workshop.")
                                                 setShowLocationPopup(true)
                                                 setLocationPromptDismissed(false)
@@ -1120,8 +1092,9 @@ export function Home() {
                                                 tags: [(formData.get('topic') as string).toUpperCase()],
                                                 location: userData.location || "",
                                                 localityKey: normalizeLocationKey(userData.location || ""),
-                                                latitude: fallbackCoords.latitude,
-                                                longitude: fallbackCoords.longitude,
+                                                latitude: userLatitude,
+                                                longitude: userLongitude,
+                                                locationSource: "precise",
                                                 author: userData.name || currentUser.email || "Anonymous",
                                                 authorAvatar: userData.avatar || `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(userData.name || currentUser.email || "User")}&backgroundColor=b6e3f4`,
                                                 chapters: chapters.map((chapter, index) => ({

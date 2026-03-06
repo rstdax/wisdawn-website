@@ -24,6 +24,7 @@ export interface WorkshopData {
   localityKey?: string;
   latitude?: number | null;
   longitude?: number | null;
+  locationSource?: "precise" | "approx";
 }
 
 export interface UserData {
@@ -41,6 +42,7 @@ export interface UserData {
   location: string;
   latitude: number | null;
   longitude: number | null;
+  locationSource?: "precise" | "approx";
   createdWorkshops: WorkshopData[];
   joinedWorkshops: WorkshopData[];
 }

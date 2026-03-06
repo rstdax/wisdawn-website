@@ -33,6 +33,7 @@ export interface DoubtData {
   localityKey?: string;
   latitude?: number | null;
   longitude?: number | null;
+  locationSource?: "precise" | "approx";
   timestampMs?: number;
 }
 
@@ -172,6 +173,10 @@ export async function upsertUserProfile(uid: string, data: Partial<UserData>) {
     payload.localityKey = normalizeLocationKey(safeLocation);
   }
 
+  if (data.locationSource === "precise" || data.locationSource === "approx") {
+    payload.locationSource = data.locationSource;
+  }
+
   const normalizedLatitude = normalizeCoordinate(data.latitude);
   const normalizedLongitude = normalizeCoordinate(data.longitude);
 
@@ -251,6 +256,7 @@ export async function createWorkshop(workshop: WorkshopData & { hostUid: string 
     chapters,
     location,
     localityKey: workshop.localityKey ?? normalizeLocationKey(location),
+    locationSource: workshop.locationSource ?? "precise",
     latitude: normalizedLatitude,
     longitude: normalizedLongitude,
     lat: normalizedLatitude,
@@ -337,6 +343,7 @@ function mapDoubtDoc(
     createdAt: data.createdAt instanceof Timestamp ? data.createdAt : undefined,
     location,
     localityKey: String(data.localityKey ?? normalizeLocationKey(location)),
+    locationSource: data.locationSource === "approx" ? "approx" : "precise",
     latitude: normalizedLatitude,
     longitude: normalizedLongitude,
     timestampMs,
@@ -428,6 +435,7 @@ export function subscribeToWorkshops(
         ),
         location,
         localityKey: String(data.localityKey ?? normalizeLocationKey(location)),
+        locationSource: data.locationSource === "approx" ? "approx" : "precise",
         latitude: normalizedLatitude,
         longitude: normalizedLongitude,
       } satisfies WorkshopData;
@@ -455,6 +463,7 @@ export async function createDoubt(
     localityKey?: string;
     latitude?: number | null;
     longitude?: number | null;
+    locationSource?: "precise" | "approx";
   },
 ) {
   const doubtId = String(doubt.id);
@@ -503,6 +512,7 @@ export async function createDoubt(
     imageUrl: normalizedImageUrl,
     location,
     localityKey: doubt.localityKey ?? normalizeLocationKey(location),
+    locationSource: doubt.locationSource ?? "precise",
     latitude: normalizedLatitude,
     longitude: normalizedLongitude,
     lat: normalizedLatitude,
