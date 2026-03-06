@@ -71,6 +71,19 @@ export function Home() {
             .slice(0, 2)
             .join("|")
 
+    const toFiniteNumber = (value: unknown): number | null => {
+        if (typeof value === "number" && Number.isFinite(value)) {
+            return value
+        }
+        if (typeof value === "string") {
+            const parsed = Number(value)
+            if (Number.isFinite(parsed)) {
+                return parsed
+            }
+        }
+        return null
+    }
+
     const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         const toRad = (deg: number) => (deg * Math.PI) / 180
         const earthRadiusKm = 6371
@@ -182,53 +195,67 @@ export function Home() {
         (d.tags || []).some(t => (t || "").toLowerCase().includes(searchQuery.toLowerCase()))
     )
 
-    const userLatitude = userData.latitude
-    const userLongitude = userData.longitude
+    const userLatitude = toFiniteNumber(userData.latitude)
+    const userLongitude = toFiniteNumber(userData.longitude)
+    const userLocalityKey = normalizeLocationKey(userData.location || "")
 
-    const matchesLocalityByCoords = (params: {
-        latitude?: number | null
-        longitude?: number | null
+    const matchesLocality = (params: {
+        latitude?: number | string | null
+        longitude?: number | string | null
+        localityKey?: string
+        location?: string
     }) => {
+        const itemLatitude = toFiniteNumber(params.latitude)
+        const itemLongitude = toFiniteNumber(params.longitude)
         if (
-            typeof userLatitude === "number" &&
-            typeof userLongitude === "number" &&
-            typeof params.latitude === "number" &&
-            typeof params.longitude === "number"
+            userLatitude !== null &&
+            userLongitude !== null &&
+            itemLatitude !== null &&
+            itemLongitude !== null
         ) {
-            return haversineKm(userLatitude, userLongitude, params.latitude, params.longitude) <= LOCALITY_RADIUS_KM
+            return haversineKm(userLatitude, userLongitude, itemLatitude, itemLongitude) <= LOCALITY_RADIUS_KM
+        }
+        const itemLocalityKey = (params.localityKey || normalizeLocationKey(params.location || "")).trim()
+        if (userLocalityKey && itemLocalityKey) {
+            return userLocalityKey === itemLocalityKey
         }
         return false
     }
 
     const localWorkshops = baseFilteredWorkshops.filter(w =>
-        matchesLocalityByCoords({
+        matchesLocality({
             latitude: w.latitude,
             longitude: w.longitude,
+            localityKey: w.localityKey,
+            location: w.location,
         })
     )
     const localDoubts = baseFilteredDoubts.filter(d =>
-        matchesLocalityByCoords({
+        matchesLocality({
             latitude: d.latitude,
             longitude: d.longitude,
+            localityKey: d.localityKey,
+            location: d.location,
         })
     )
 
-    const hasUserCoords = typeof userLatitude === "number" && typeof userLongitude === "number"
+    const hasUserCoords = userLatitude !== null && userLongitude !== null
+    const hasLocalityContext = hasUserCoords || Boolean(userLocalityKey)
     const filteredWorkshops = filter === "GLOBAL"
         ? baseFilteredWorkshops
-        : (hasUserCoords ? localWorkshops : [])
+        : (hasLocalityContext ? localWorkshops : [])
     const filteredDoubts = filter === "GLOBAL"
         ? baseFilteredDoubts
-        : (hasUserCoords ? localDoubts : [])
+        : (hasLocalityContext ? localDoubts : [])
     const visibleDoubts = filteredDoubts.slice(0, visibleDoubtsCount)
 
     const closeSidebar = () => setMobileSidebarOpen(false)
 
     useEffect(() => {
-        if (filter === "LOCALITY" && !hasUserCoords && !showLocationPopup && !locationPromptDismissed) {
+        if (filter === "LOCALITY" && !hasLocalityContext && !showLocationPopup && !locationPromptDismissed) {
             setShowLocationPopup(true)
         }
-    }, [filter, hasUserCoords, showLocationPopup, locationPromptDismissed])
+    }, [filter, hasLocalityContext, showLocationPopup, locationPromptDismissed])
 
     useEffect(() => {
         if (!joinedToast.visible) {
@@ -977,8 +1004,8 @@ export function Home() {
                                     void (async () => {
                                         try {
                                             const fallbackCoords =
-                                                typeof userData.latitude === "number" && typeof userData.longitude === "number"
-                                                    ? { latitude: userData.latitude, longitude: userData.longitude }
+                                                userLatitude !== null && userLongitude !== null
+                                                    ? { latitude: userLatitude, longitude: userLongitude }
                                                     : await resolveCoordinatesFromLocation(userData.location || "")
                                             const attachmentUrls = await uploadFiles(
                                                 `post_images/${doubtId}`,
@@ -1082,8 +1109,8 @@ export function Home() {
                                             const today = new Date();
                                             const formattedDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                                             const fallbackCoords =
-                                                typeof userData.latitude === "number" && typeof userData.longitude === "number"
-                                                    ? { latitude: userData.latitude, longitude: userData.longitude }
+                                                userLatitude !== null && userLongitude !== null
+                                                    ? { latitude: userLatitude, longitude: userLongitude }
                                                     : await resolveCoordinatesFromLocation(userData.location || "");
                                             const newWorkshop: WorkshopData & { hostUid: string } = {
                                                 id: Date.now(),
