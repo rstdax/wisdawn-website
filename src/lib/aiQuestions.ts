@@ -28,26 +28,44 @@ export async function generateQuestionsFromTopic(params: GenerateQuestionsParams
     throw new Error("Please enter a topic.");
   }
 
-  const response = await fetch("/.netlify/functions/generate-quest-questions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      topic,
-      mcqCount: params.mcqCount ?? 5,
-      openQuestionCount: params.openQuestionCount ?? 3,
-    }),
+  const body = JSON.stringify({
+    topic,
+    mcqCount: params.mcqCount ?? 5,
+    openQuestionCount: params.openQuestionCount ?? 3,
   });
+  const endpoints = [
+    "/api/generate-quest-questions",
+    "/.netlify/functions/generate-quest-questions",
+  ];
 
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message =
+  let lastError = "Failed to generate questions.";
+
+  for (const endpoint of endpoints) {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok) {
+      return payload as GeneratedQuestionSet;
+    }
+
+    const errorFromPayload =
       typeof payload?.error === "string" && payload.error.trim()
         ? payload.error
-        : "Failed to generate questions.";
-    throw new Error(message);
+        : "";
+
+    if (response.status === 404) {
+      lastError = errorFromPayload || "Question generation endpoint not found.";
+      continue;
+    }
+
+    throw new Error(errorFromPayload || `Failed to generate questions (HTTP ${response.status}).`);
   }
 
-  return payload as GeneratedQuestionSet;
+  throw new Error(lastError);
 }
