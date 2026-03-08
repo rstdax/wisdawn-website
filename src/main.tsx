@@ -11,6 +11,11 @@ console.log(
   "color: #ffffff; background: #10b981; padding: 6px 12px; border-radius: 0 4px 4px 0; font-family: 'Inter', 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 400;"
 );
 
+console.log(
+  "%c ✨ Turning bold ideas into extraordinary digital experiences. Let's build something amazing together! ✨ ",
+  "color: #3b82f6; font-weight: bold; font-size: 13px; font-family: 'Inter', 'Segoe UI', Arial, sans-serif; padding-top: 8px; padding-bottom: 8px;"
+);
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <UserProvider>       {/* <-- Wrap your App */}
