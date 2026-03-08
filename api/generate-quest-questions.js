@@ -153,7 +153,7 @@ async function callGoogleAI(apiKey, model, prompt) {
     }
   }
 
-  throw new Error(quotaError ? quotaError : lastError);
+  throw new Error(lastError);
 }
 
 export default async function handler(req, res) {
