@@ -132,14 +132,13 @@ async function callGoogleAI(apiKey, model, prompt) {
     if (!response.ok) {
       const details = await response.text();
       lastError = `AI provider request failed (${response.status}) on model ${candidateModel}: ${details.slice(0, 300)}`;
-      
-      if (response.status === 429 && !quotaError) {
-        quotaError = lastError;
-      }
 
-      if (response.status === 404 || response.status === 429 || response.status >= 500) {
+      if (response.status === 404 || response.status >= 500) {
+        // Fallback to the next model only on "Model Not Found" or server-side errors
         continue;
       }
+      // If it's a 429 Too Many Requests/Quota Exceeded, throw immediately since 
+      // rate limits/quotas apply across the entire API Key project, not just a single model.
       throw new Error(lastError);
     }
 
