@@ -1,5 +1,5 @@
 const GOOGLE_GENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const DEFAULT_GOOGLE_MODEL = "gemini-1.5-flash";
+const DEFAULT_GOOGLE_MODEL = "gemini-2.0-flash";
 
 function safeString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -92,42 +92,62 @@ function buildPrompt(topic, mcqCount, openQuestionCount) {
 }
 
 async function callGoogleAI(apiKey, model, prompt) {
-  const resolvedModel = model || DEFAULT_GOOGLE_MODEL;
-  const response = await fetch(`${GOOGLE_GENAI_BASE_URL}/${resolvedModel}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 900,
+  const cleanedModel = safeString(model).replace(/^models\//, "");
+  const preferredModels = [
+    cleanedModel || DEFAULT_GOOGLE_MODEL,
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
+  ].filter(Boolean);
+
+  const tried = new Set();
+  let lastError = "AI provider request failed.";
+
+  for (const candidateModel of preferredModels) {
+    if (tried.has(candidateModel)) continue;
+    tried.add(candidateModel);
+
+    const response = await fetch(`${GOOGLE_GENAI_BASE_URL}/${candidateModel}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 900,
+        },
+      }),
+    });
 
-  if (!response.ok) {
-    const details = await response.text();
-    throw new Error(`AI provider request failed (${response.status}): ${details.slice(0, 300)}`);
+    if (!response.ok) {
+      const details = await response.text();
+      lastError = `AI provider request failed (${response.status}) on model ${candidateModel}: ${details.slice(0, 300)}`;
+      if (response.status === 404) {
+        continue;
+      }
+      throw new Error(lastError);
+    }
+
+    const data = await response.json();
+    const parts = data?.candidates?.[0]?.content?.parts;
+    const text = Array.isArray(parts)
+      ? safeString(parts.map((part) => safeString(part?.text)).join("\n"))
+      : "";
+
+    if (text) {
+      return text;
+    }
   }
 
-  const data = await response.json();
-  const parts = data?.candidates?.[0]?.content?.parts;
-  const text = Array.isArray(parts)
-    ? safeString(parts.map((part) => safeString(part?.text)).join("\n"))
-    : "";
-
-  if (!text) {
-    throw new Error("AI provider returned empty output.");
-  }
-
-  return text;
+  throw new Error(lastError);
 }
 
 export default async function handler(req, res) {
