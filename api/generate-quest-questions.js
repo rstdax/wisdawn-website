@@ -130,7 +130,7 @@ async function callGoogleAI(apiKey, model, prompt) {
     if (!response.ok) {
       const details = await response.text();
       lastError = `AI provider request failed (${response.status}) on model ${candidateModel}: ${details.slice(0, 300)}`;
-      if (response.status === 404) {
+      if (response.status === 404 || response.status === 429 || response.status >= 500) {
         continue;
       }
       throw new Error(lastError);
