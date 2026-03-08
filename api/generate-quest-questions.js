@@ -96,13 +96,15 @@ async function callGoogleAI(apiKey, model, prompt) {
   const preferredModels = [
     cleanedModel || DEFAULT_GOOGLE_MODEL,
     "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash-latest",
+    "gemini-2.0-flash-lite-preview-02-05",
     "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
   ].filter(Boolean);
 
   const tried = new Set();
   let lastError = "AI provider request failed.";
+  let quotaError = null;
 
   for (const candidateModel of preferredModels) {
     if (tried.has(candidateModel)) continue;
@@ -130,6 +132,11 @@ async function callGoogleAI(apiKey, model, prompt) {
     if (!response.ok) {
       const details = await response.text();
       lastError = `AI provider request failed (${response.status}) on model ${candidateModel}: ${details.slice(0, 300)}`;
+      
+      if (response.status === 429 && !quotaError) {
+        quotaError = lastError;
+      }
+
       if (response.status === 404 || response.status === 429 || response.status >= 500) {
         continue;
       }
@@ -147,7 +154,7 @@ async function callGoogleAI(apiKey, model, prompt) {
     }
   }
 
-  throw new Error(lastError);
+  throw new Error(quotaError ? quotaError : lastError);
 }
 
 export default async function handler(req, res) {
