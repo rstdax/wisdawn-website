@@ -1,7 +1,5 @@
-const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
-const OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
-const DEFAULT_OPENROUTER_MODEL = "openai/gpt-4.1-mini";
+const GOOGLE_GENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const DEFAULT_GOOGLE_MODEL = "gemini-1.5-flash";
 
 function safeString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -93,16 +91,24 @@ function buildPrompt(topic, mcqCount, openQuestionCount) {
   ].join("\n");
 }
 
-async function callOpenAI(apiKey, model, prompt) {
-  const response = await fetch(OPENAI_RESPONSES_URL, {
+async function callGoogleAI(apiKey, model, prompt) {
+  const resolvedModel = model || DEFAULT_GOOGLE_MODEL;
+  const response = await fetch(`${GOOGLE_GENAI_BASE_URL}/${resolvedModel}:generateContent?key=${encodeURIComponent(apiKey)}`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: model || DEFAULT_OPENAI_MODEL,
-      input: prompt,
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 900,
+      },
     }),
   });
 
@@ -112,41 +118,15 @@ async function callOpenAI(apiKey, model, prompt) {
   }
 
   const data = await response.json();
-  const text = safeString(data?.output_text);
+  const parts = data?.candidates?.[0]?.content?.parts;
+  const text = Array.isArray(parts)
+    ? safeString(parts.map((part) => safeString(part?.text)).join("\n"))
+    : "";
+
   if (!text) {
     throw new Error("AI provider returned empty output.");
   }
-  return text;
-}
 
-async function callOpenRouter(apiKey, model, prompt, host) {
-  const resolvedModel = model
-    ? (model.includes("/") ? model : `openai/${model}`)
-    : DEFAULT_OPENROUTER_MODEL;
-  const response = await fetch(OPENROUTER_CHAT_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": host || "https://vercel.app",
-      "X-Title": "wisdawn-website",
-    },
-    body: JSON.stringify({
-      model: resolvedModel,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  if (!response.ok) {
-    const details = await response.text();
-    throw new Error(`AI provider request failed (${response.status}): ${details.slice(0, 300)}`);
-  }
-
-  const data = await response.json();
-  const text = safeString(data?.choices?.[0]?.message?.content);
-  if (!text) {
-    throw new Error("AI provider returned empty output.");
-  }
   return text;
 }
 
@@ -157,9 +137,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = safeString(process.env.GOOGLE_API_KEY);
+
     if (!apiKey) {
-      res.status(500).json({ error: "OPENAI_API_KEY is not configured." });
+      res.status(500).json({ error: "GOOGLE_API_KEY is not configured." });
       return;
     }
 
@@ -174,11 +155,7 @@ export default async function handler(req, res) {
     }
 
     const prompt = buildPrompt(topic, mcqCount, openQuestionCount);
-    const usesOpenRouter = apiKey.startsWith("sk-or-v1-");
-
-    const rawText = usesOpenRouter
-      ? await callOpenRouter(apiKey, process.env.OPENAI_MODEL, prompt, req.headers?.origin)
-      : await callOpenAI(apiKey, process.env.OPENAI_MODEL, prompt);
+    const rawText = await callGoogleAI(apiKey, process.env.GOOGLE_MODEL, prompt);
 
     const parsed = extractJson(rawText);
     const normalized = parseAndNormalize(parsed, topic);
