@@ -11,6 +11,8 @@ import {
   Award,
   HelpCircle,
   PenTool,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import { useUser } from "../contexts/UserContext";
 import {
@@ -31,6 +33,10 @@ import {
   type QuestProfileStats,
   type QuestProgress,
 } from "../lib/quests";
+import {
+  generateQuestionsFromTopic,
+  type GeneratedQuestionSet,
+} from "../lib/aiQuestions";
 
 const fallbackStats: QuestProfileStats = {
   level: 12,
@@ -50,6 +56,10 @@ export function Quests() {
   const [answerInputs, setAnswerInputs] = useState<Record<string, string>>({});
   const [submittingQuestIds, setSubmittingQuestIds] = useState<Record<string, boolean>>({});
   const [submittingChallengeIds, setSubmittingChallengeIds] = useState<Record<string, boolean>>({});
+  const [aiTopic, setAiTopic] = useState("");
+  const [isGeneratingAiQuestions, setIsGeneratingAiQuestions] = useState(false);
+  const [aiGenerationError, setAiGenerationError] = useState("");
+  const [generatedQuestionSet, setGeneratedQuestionSet] = useState<GeneratedQuestionSet | null>(null);
 
   useEffect(() => {
     const unsubs = [
@@ -134,6 +144,27 @@ export function Quests() {
       console.error("Failed to submit challenge answer:", error);
     } finally {
       setSubmittingChallengeIds((prev) => ({ ...prev, [question.id]: false }));
+    }
+  };
+
+  const handleGenerateAiQuestions = async () => {
+    const topic = aiTopic.trim();
+    if (!topic) {
+      setAiGenerationError("Please enter a topic first.");
+      return;
+    }
+
+    setAiGenerationError("");
+    setIsGeneratingAiQuestions(true);
+    try {
+      const generated = await generateQuestionsFromTopic({
+        topic,
+      });
+      setGeneratedQuestionSet(generated);
+    } catch (error) {
+      setAiGenerationError(error instanceof Error ? error.message : "Failed to generate questions.");
+    } finally {
+      setIsGeneratingAiQuestions(false);
     }
   };
 
@@ -354,6 +385,92 @@ export function Quests() {
           <h2 className="text-3xl font-bold tracking-tight text-white mb-2">Challenge Arena</h2>
           <p className="text-neutral-400">Test your knowledge and earn XP by answering backend-tracked challenges.</p>
         </div>
+
+        <section className="bg-[#18181b] border border-white/10 rounded-3xl p-6 sm:p-8">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles size={20} className="text-indigo-400" />
+            <h3 className="text-xl font-semibold tracking-tight text-white">AI Question Generator</h3>
+          </div>
+          <p className="text-sm text-neutral-400 mb-5">
+            Enter any topic and generate practice MCQs plus descriptive questions.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              value={aiTopic}
+              onChange={(event) => setAiTopic(event.target.value)}
+              placeholder="e.g. Photosynthesis, Trigonometry, Operating Systems"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-white/20"
+            />
+            <button
+              onClick={() => void handleGenerateAiQuestions()}
+              disabled={isGeneratingAiQuestions}
+              className="shrink-0 px-5 py-3 rounded-xl bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isGeneratingAiQuestions ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                "Generate Questions"
+              )}
+            </button>
+          </div>
+
+          {aiGenerationError && (
+            <p className="mt-3 text-sm text-rose-400">{aiGenerationError}</p>
+          )}
+
+          {generatedQuestionSet && (
+            <div className="mt-7 grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="bg-black/30 border border-white/10 rounded-2xl p-5">
+                <h4 className="text-base font-semibold text-white mb-4">MCQs on {generatedQuestionSet.topic}</h4>
+                <div className="space-y-4">
+                  {generatedQuestionSet.mcqs.map((mcq, index) => (
+                    <div key={`ai-mcq-${index}`} className="bg-white/[0.03] border border-white/10 rounded-xl p-4">
+                      <p className="text-sm text-white font-medium mb-3">{index + 1}. {mcq.question}</p>
+                      <div className="space-y-2">
+                        {mcq.options.map((option, optionIndex) => {
+                          const isAnswer = optionIndex === mcq.answerIndex;
+                          return (
+                            <div
+                              key={`ai-mcq-opt-${index}-${optionIndex}`}
+                              className={`text-xs rounded-lg px-3 py-2 border ${isAnswer ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-200" : "border-white/10 bg-white/[0.02] text-neutral-300"}`}
+                            >
+                              {String.fromCharCode(65 + optionIndex)}. {option}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {mcq.explanation && (
+                        <p className="mt-3 text-xs text-neutral-400">Why: {mcq.explanation}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-black/30 border border-white/10 rounded-2xl p-5">
+                <h4 className="text-base font-semibold text-white mb-4">Long Answer Practice</h4>
+                <div className="space-y-4">
+                  {generatedQuestionSet.openQuestions.map((question, index) => (
+                    <div key={`ai-open-${index}`} className="bg-white/[0.03] border border-white/10 rounded-xl p-4">
+                      <p className="text-sm text-white font-medium mb-3">{index + 1}. {question.question}</p>
+                      <div className="space-y-2">
+                        {question.expectedPoints.map((point, pointIndex) => (
+                          <p key={`ai-open-point-${index}-${pointIndex}`} className="text-xs text-neutral-400">
+                            - {point}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <section>
